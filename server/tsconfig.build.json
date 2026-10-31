@@ -1,0 +1,11 @@
+{
+  // 构建用配置：只编译 src 到 dist，命令脚本通过 tsx 直接运行，不参与构建
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  // 测试文件不参与构建
+  "exclude": ["src/**/*.test.ts"]
+}

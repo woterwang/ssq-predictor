@@ -1,0 +1,34 @@
+{
+  "name": "ssq-predictor-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "双色球数据分析与号码推荐系统 - 后端服务",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
+    "db:init": "tsx scripts/initDatabase.ts",
+    "import:full": "tsx scripts/importFullHistory.ts",
+    "sync:latest": "tsx scripts/syncLatestDraws.ts",
+    "scheduler": "tsx scripts/runScheduler.ts",
+    "analyze:basic": "tsx scripts/analyzeBasicStatistics.ts",
+    "verify:basic": "tsx scripts/verifyBasicStatistics.ts",
+    "analyze:research": "tsx scripts/analyzeResearch.ts",
+    "verify:research": "tsx scripts/verifyResearch.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.4.7",
+    "ml-matrix": "^6.12.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^18.19.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}
