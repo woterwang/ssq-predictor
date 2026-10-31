@@ -1,0 +1,46 @@
+<view class="page">
+  <view class="notice">透明随机推荐与历史数据观察。M0 是公平随机基线，不是提高中奖概率的预测模型。</view>
+  <view class="card accent-card">
+    <view class="title">下期固化原件</view>
+    <request-state loading="{{nextLoading}}" error="{{nextError}}" last-updated="{{nextUpdatedAt}}" bind:retry="refreshNext" />
+    <view wx:if="{{next && (nextError || nextLoading)}}" class="notice warm">{{nextLoading ? '正在刷新' : '本次刷新失败'}}，以下为上次取得的原件与状态，不代表当前最新状态。取得时间（设备记录）：{{nextUpdatedAt}}</view>
+    <block wx:if="{{next}}">
+      <view class="issue">{{targetIssueText}}</view>
+      <view class="muted">目标开奖日期（北京时间）：{{targetDateText}}</view>
+      <view class="space-top"><t-tag theme="{{statusTheme}}" variant="light">{{statusLabel}}</t-tag></view>
+      <view class="space-top">{{statusMessage}}</view>
+      <view class="muted space-top">源数据最新期：{{sourceIssueText}}</view>
+      <view class="muted">保守生成截止：{{deadlineText}}（非官方停售时间）</view>
+      <block wx:if="{{next.recommendation}}">
+        <view class="divider" />
+        <view class="subtitle">{{next.recommendation.strategyName}} · {{next.recommendation.strategyVersion}}</view>
+        <view class="muted">实际固化时间：{{generatedAtText}}</view>
+        <view wx:for="{{frozenTickets}}" wx:key="ticketKey" class="ticket-item">
+          <ticket-row red-balls="{{item.redBalls}}" blue-ball="{{item.blueBall}}" index="{{item.ticketIndex}}" />
+        </view>
+        <view class="actions">
+          <t-button theme="primary" variant="outline" bindtap="copyFrozenTickets">复制固化号码</t-button>
+          <t-button theme="primary" variant="outline" bindtap="openVerification">查看核验</t-button>
+        </view>
+        <audit-details record="{{next.recommendation}}" />
+      </block>
+      <view wx:else class="notice warm space-top">服务器尚无固化原件，不展示假票；刷新不会生成或换号。</view>
+    </block>
+    <view class="entry" bindtap="openResearch" aria-role="button">M0 策略说明<text>›</text></view>
+    <view class="entry" bindtap="openRecommendations" aria-role="button">推荐档案<text>›</text></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{nextLoading}}" disabled="{{nextLoading}}" bindtap="refreshNext">只读刷新原件</t-button></view>
+  </view>
+  <view class="card">
+    <view class="title">最新收录开奖</view>
+    <request-state loading="{{drawLoading}}" error="{{drawError}}" empty="{{latestEmpty}}" empty-text="服务器暂无收录开奖" last-updated="{{drawUpdatedAt}}" bind:retry="refreshLatestDraw" />
+    <view wx:if="{{latestDraw && (drawError || drawLoading)}}" class="notice warm">{{drawLoading ? '正在刷新' : '本次刷新失败'}}，以下开奖为上次取得的数据，未能确认最新收录状态。取得时间（设备记录）：{{drawUpdatedAt}}</view>
+    <block wx:if="{{latestDraw}}">
+      <view class="subtitle">第{{latestDraw.issue}}期</view>
+      <view class="muted">开奖日期（北京时间）：{{latestDraw.drawDate}}</view>
+      <ticket-row red-balls="{{latestDraw.redBalls}}" blue-ball="{{latestDraw.blueBall}}" label="开奖号码（升序）" />
+      <view class="action"><t-button theme="primary" variant="outline" bindtap="openLatestDraw">查看开奖详情</t-button></view>
+    </block>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{drawLoading}}" disabled="{{drawLoading}}" bindtap="refreshLatestDraw">刷新最新开奖</t-button></view>
+  </view>
+  <disclaimer-notice />
+</view>

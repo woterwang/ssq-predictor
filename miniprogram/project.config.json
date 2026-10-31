@@ -1,0 +1,41 @@
+{
+  "description": "双色球数据观察：构建后导入本目录，dist为可运行代码",
+  "miniprogramRoot": "dist/",
+  "compileType": "miniprogram",
+  "appid": "wx7d65924a0cfcb30c",
+  "projectname": "ssq-observer",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "packNpmManually": true,
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./dist/"
+      }
+    ],
+    "postcss": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

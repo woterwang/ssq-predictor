@@ -1,0 +1,6 @@
+.strategy + .strategy { border-top: 1rpx solid #e3e8ef; }
+.strategy .entry { border-top: none; }
+.strategy-name { font-weight: 600; margin-bottom: 8rpx; overflow-wrap: anywhere; }
+.strategy-body { padding: 0 0 24rpx; color: #40516b; }
+.bullet { font-size: 26rpx; }
+.table-head { font-weight: 600; color: #172b4d; }

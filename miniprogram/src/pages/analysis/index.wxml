@@ -1,0 +1,75 @@
+<view class="page">
+  <view class="notice">历史冷热与遗漏只描述已取得样本，不是下期中奖概率；每期开奖相互独立。</view>
+  <view class="card">
+    <view class="title">号码分析</view>
+    <view class="segment" aria-role="tablist">
+      <view class="segment-item {{color === 'red' ? 'active red' : ''}}" data-color="red" bindtap="chooseColor" aria-role="tab" aria-selected="{{color === 'red'}}">红球 01–33</view>
+      <view class="segment-item {{color === 'blue' ? 'active blue' : ''}}" data-color="blue" bindtap="chooseColor" aria-role="tab" aria-selected="{{color === 'blue'}}">蓝球 01–16</view>
+    </view>
+    <view class="segment space-top" aria-role="tablist">
+      <view wx:for="{{windowOptions}}" wx:key="value" class="segment-item {{window === item.value ? 'active' : ''}}" data-window="{{item.value}}" bindtap="chooseWindow" aria-role="tab" aria-selected="{{window === item.value}}">{{item.label}}</view>
+    </view>
+    <block wx:if="{{loaded}}">
+      <view class="space-top">{{coverage}}</view>
+      <view class="muted">统计窗口：{{shownWindowText}} · 报告生成：{{generatedText}}</view>
+      <view wx:for="{{warnings}}" wx:key="*this" class="notice warm space-top">{{item}}</view>
+    </block>
+  </view>
+  <request-state loading="{{loading}}" error="{{error}}" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{loaded && (error || loading)}}" class="notice warm">{{loading ? '正在读取' : '本次请求失败'}}，以下为上次取得的「{{shownWindowText}}」统计，不代表当前所选窗口或最新状态。取得时间（设备记录）：{{lastUpdated}}</view>
+
+  <block wx:if="{{loaded}}">
+    <view class="card">
+      <view class="row"><view class="subtitle">频次冷热</view><text class="muted">点号码看详情</text></view>
+      <view class="muted">按同色频次25%/75%分位划分：冷 / 常 / 热；并列不强行分级。</view>
+      <view class="grid">
+        <view wx:for="{{rows}}" wx:key="number" class="cell heat-{{item.heat}} {{selected && selected.number === item.number ? 'picked' : ''}}" data-number="{{item.number}}" bindtap="selectNumber" aria-role="button" aria-label="{{item.accessibleLabel}}">
+          <view class="cell-number {{color}}">{{item.numberText}}</view>
+          <view class="cell-count">{{item.count}}次</view>
+          <view class="cell-heat">{{item.heatText}}</view>
+        </view>
+      </view>
+      <view wx:if="{{selected}}" class="detail">
+        <view class="row"><view class="subtitle">{{selected.title}} · {{selected.heatText}}</view><text class="link" bindtap="closeDetail" aria-role="button">收起</text></view>
+        <view class="table-row"><view>出现次数</view><view>{{selected.count}}（理论期望 {{selected.expected}}）</view></view>
+        <view class="table-row"><view>出现率</view><view>{{selected.rate}}（理论 {{selected.theoreticalRate}}）</view></view>
+        <view class="table-row"><view>当前遗漏</view><view>{{selected.omission}} 期</view></view>
+        <view class="table-row"><view>完整遗漏均值</view><view>{{selected.averageComplete}}</view></view>
+        <view class="table-row"><view>完整遗漏最大</view><view>{{selected.maximumComplete}}</view></view>
+        <view class="table-row"><view>窗口内观测最大遗漏</view><view>{{selected.maximumObserved}}</view></view>
+        <view class="table-row"><view>最近出现</view><view>{{selected.lastIssue}}</view></view>
+        <view wx:if="{{selected.lowerBound}}" class="muted space-top">窗口内未出现，真实遗漏可能更长，只显示下界。</view>
+        <view class="muted space-top">完整遗漏只计两次出现之间的间隔；不足两次出现时为“—”。</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="subtitle">出现频次</view>
+      <view class="muted">条长为同色内相对值，竖线为均匀开奖理论期望；红蓝基数不同，不跨颜色比较。</view>
+      <view wx:for="{{rows}}" wx:key="number" class="bar-row" aria-label="{{item.accessibleLabel}}，理论期望{{item.expectedText}}次">
+        <view class="bar-label">{{item.numberText}}</view>
+        <view class="bar-track">
+          <view class="bar {{color}}" style="width: {{item.barPercent}}%"></view>
+          <view class="expected" style="left: {{item.expectedPercent}}%"></view>
+        </view>
+        <view class="bar-value">{{item.count}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="subtitle">遗漏表</view>
+      <view class="table-row table-head"><view>号码</view><view>当前遗漏</view><view>完整均值</view><view>观测最大</view></view>
+      <view wx:for="{{rows}}" wx:key="number" class="table-row"><view>{{item.numberText}}</view><view>{{item.omission}}</view><view>{{item.averageOmission}}</view><view>{{item.maximumObserved}}</view></view>
+      <view class="muted space-top">“≥N”表示窗口内未出现，只知道下界；“观测最大”含窗口两端截断区间，不是全历史真实最大值。</view>
+    </view>
+  </block>
+
+  <view class="card">
+    <view class="subtitle">研究入口</view>
+    <view class="entry" bindtap="openTrend" aria-role="button">和值 / 跨度 / AC / 蓝球走势图<text>›</text></view>
+    <view class="entry" bindtap="openBacktests" aria-role="button">历史回测看板<text>›</text></view>
+    <view class="entry" bindtap="openStrategy" aria-role="button">策略说明<text>›</text></view>
+    <view class="entry" bindtap="openTicketCheck" aria-role="button">选号体检（查看结构）<text>›</text></view>
+  </view>
+  <disclaimer-notice />
+</view>

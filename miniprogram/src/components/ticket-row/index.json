@@ -1,0 +1,1 @@
+{ "component": true, "usingComponents": { "number-ball": "../number-ball/index" } }

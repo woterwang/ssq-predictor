@@ -1,0 +1,40 @@
+<view class="page">
+  <request-state loading="{{loading}}" error="{{error}}" empty="{{notFound}}" empty-text="尚未收录该期：可能待开奖、待同步或超出2013年起可用历史范围。" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{draw && (error || loading)}}" class="notice warm">{{loading ? '正在刷新' : '本次刷新失败'}}，以下仅为上次取得的开奖详情，不代表当前最新版本。取得时间（设备记录）：{{lastUpdated}}。</view>
+  <block wx:if="{{draw}}">
+    <view class="card accent-card">
+      <view class="title">第{{draw.issue}}期开奖</view>
+      <view class="muted">开奖日期（北京时间）：{{draw.drawDate}}</view>
+      <ticket-row red-balls="{{draw.redBalls}}" blue-ball="{{draw.blueBall}}" label="开奖号码（升序）" />
+      <view class="muted space-top">红球按升序展示，不代表官方出球顺序。</view>
+    </view>
+    <view class="card" wx:if="{{structure}}">
+      <view class="title">本期号码结构</view>
+      <view class="metrics">
+        <metric-card label="红球和值" value="{{structure.sum}}" />
+        <metric-card label="红球跨度" value="{{structure.span}}" />
+        <metric-card label="红球奇 : 偶" value="{{structure.oddEven}}" />
+        <metric-card label="红球AC值" value="{{structure.ac}}" />
+      </view>
+      <view>三区比：{{structure.zones}}</view>
+      <view class="muted">三区为01—11 / 12—22 / 23—33；跨度为最大减最小；AC为不同正差数量减5。仅描述结构，不评价优劣或预测未来。</view>
+    </view>
+    <view class="card">
+      <view class="title">公告金额与常规奖级</view>
+      <view class="metrics">
+        <metric-card label="销售额" value="{{salesText}}" />
+        <metric-card label="奖池金额" value="{{poolText}}" />
+      </view>
+      <view class="table-row table-head"><view>奖级</view><view>中奖注数</view><view>单注公告金额</view></view>
+      <view wx:for="{{prizeRows}}" wx:key="grade" class="table-row"><view>{{item.label}}</view><view>{{item.countText}}</view><view>{{item.amountText}}</view></view>
+      <view class="notice warm space-top">{{completenessText}}</view>
+      <view class="muted">当前公开详情不提供完整特别奖原始字段；不将常规奖级第7项占位解释为福运奖。公告金额不是实际兑奖收益。</view>
+    </view>
+    <view class="card"><view class="subtitle">来源与口径</view><view class="muted space-top">中国福彩网公开接口，由配置的公众服务读取。数据可能修正；本页面只展示本次响应，不作派奖收益或实际兑奖判断。</view></view>
+  </block>
+  <view class="card">
+    <t-button wx:if="{{routeValid}}" theme="primary" variant="outline" loading="{{loading}}" disabled="{{loading}}" bindtap="refresh">刷新本期详情</t-button>
+    <view class="action"><t-button theme="primary" variant="outline" bindtap="openHistory">返回历史开奖</t-button></view>
+  </view>
+  <disclaimer-notice />
+</view>

@@ -10,17 +10,25 @@
 import { closeDatabase } from '../src/db/connection';
 import { createDefaultDrawSyncJobContext, startDrawSyncScheduler } from '../src/jobs/drawSyncJob';
 import { logger } from '../src/utils/logger';
+import { getDatabase } from '../src/db/connection';
+import { isDatabaseSyncRunning } from '../src/jobs/syncWorkflow';
 
 const scheduler = startDrawSyncScheduler(createDefaultDrawSyncJobContext());
 
 /**
  * 收到退出信号时停止调度并关闭数据库。
  */
+let shuttingDown = false;
 function shutdown(signalName: string): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
   logger.info(`收到 ${signalName}，停止定时同步`);
   scheduler.stop();
-  closeDatabase();
-  process.exit(0);
+  const database = getDatabase();
+  const timer = setInterval(() => {
+    if (isDatabaseSyncRunning(database)) return;
+    clearInterval(timer); closeDatabase();
+  }, 100);
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));

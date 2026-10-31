@@ -1,0 +1,6 @@
+<view wx:if="{{loading}}" class="state"><t-loading theme="circular" text="正在读取公众数据" /><view class="skeleton" /><view class="skeleton short" /></view>
+<view wx:elif="{{error}}" class="state error">
+  <view>{{error}}</view><view wx:if="{{lastUpdated}}" class="time">保留旧数据；上次取得时间（设备记录）：{{lastUpdated}}</view>
+  <view class="retry"><t-button theme="primary" variant="outline" bindtap="retry">只读重试</t-button></view>
+</view>
+<view wx:elif="{{empty}}" class="state">{{emptyText || '尚无可展示数据'}}</view>

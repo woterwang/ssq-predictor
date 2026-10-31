@@ -1,0 +1,5 @@
+/* 命中仅用服务端文字记录；没有跨HTTP快照的球号命中覆盖层。 */
+.frozen-ticket { margin-top: 24rpx; padding-bottom: 20rpx; border-bottom: 1rpx solid #e3e8ef; }
+.outcome-text { margin-top: 12rpx; color: #40516b; }
+.audit-warning { margin-top: 16rpx; padding: 16rpx; border-radius: 12rpx; background: #fff4e5; color: #815021; font-size: 24rpx; overflow-wrap: anywhere; }
+.version-entry { padding: 24rpx 0; border-top: 1rpx solid #e3e8ef; }

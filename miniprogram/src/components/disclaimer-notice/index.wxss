@@ -1,0 +1,2 @@
+.risk { font-size: 24rpx; color: #58677c; line-height: 1.7; padding: 20rpx 4rpx; }
+.link { color: #2864b7; min-height: 88rpx; display: flex; align-items: center; }

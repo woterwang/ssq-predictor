@@ -1,0 +1,3 @@
+/* 不在档案列表制造核验汇总；整卡作为明确的详情入口。 */
+.archive-entry { min-height: 180rpx; }
+.archive-entry:active { background: #f8faff; }

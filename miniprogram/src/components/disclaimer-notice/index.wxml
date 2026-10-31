@@ -1,0 +1,5 @@
+<view class="risk">
+  <view>随机推荐不提高单注中奖概率。仅供研究与娱乐，不构成购彩建议，不承诺收益。</view>
+  <view>未成年人不得购彩及兑奖。不提供代购、支付或资金交易。</view>
+  <view class="link" bindtap="openAbout" aria-role="button">查看完整风险与隐私说明 ›</view>
+</view>

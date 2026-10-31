@@ -1,0 +1,26 @@
+/* 网格、频次条与遗漏表均为WXML/WXSS，不为简单统计引入图表库。 */
+.segment { display: flex; gap: 12rpx; flex-wrap: wrap; }
+.segment-item { min-height: 72rpx; padding: 0 24rpx; border: 1rpx solid #e3e8ef; border-radius: 999rpx; display: flex; align-items: center; font-size: 26rpx; color: #40516b; }
+.segment-item.active { border-color: #2864b7; color: #2864b7; background: #edf3fc; font-weight: 600; }
+.segment-item.active.red { border-color: #c93648; color: #c93648; background: #fdf0f2; }
+.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12rpx; margin-top: 20rpx; }
+.cell { min-height: 120rpx; border: 2rpx solid #e3e8ef; border-radius: 16rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+.cell.picked { border-color: #172b4d; }
+.heat-hot { background: #fdf0f2; }
+.heat-cold { background: #eef3f8; }
+.cell-number { font-size: 28rpx; font-weight: 600; }
+.cell-number.red { color: #c93648; }
+.cell-number.blue { color: #2864b7; }
+.cell-count { font-size: 22rpx; color: #40516b; }
+.cell-heat { font-size: 22rpx; color: #172b4d; font-weight: 600; }
+.detail { margin-top: 24rpx; padding: 24rpx; border-radius: 16rpx; background: #f8fafc; border: 1rpx solid #e3e8ef; }
+.link { color: #2864b7; font-size: 26rpx; min-height: 64rpx; display: flex; align-items: center; }
+.bar-row { display: flex; align-items: center; gap: 12rpx; min-height: 40rpx; font-size: 22rpx; font-variant-numeric: tabular-nums; }
+.bar-label { width: 40rpx; color: #40516b; }
+.bar-track { flex: 1; height: 20rpx; background: #f1f4f8; border-radius: 10rpx; position: relative; }
+.bar { height: 20rpx; border-radius: 10rpx; }
+.bar.red { background: #c93648; }
+.bar.blue { background: #2864b7; }
+.expected { position: absolute; top: -6rpx; width: 4rpx; height: 32rpx; background: #172b4d; }
+.bar-value { width: 64rpx; text-align: right; color: #172b4d; }
+.table-head { font-weight: 600; color: #172b4d; }

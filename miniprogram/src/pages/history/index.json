@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "历史开奖",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 120,
+  "usingComponents": { "t-input": "tdesign-miniprogram/input/input" }
+}

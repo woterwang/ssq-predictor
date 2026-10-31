@@ -1,0 +1,35 @@
+<view class="page">
+  <view class="notice">规则：红球选6个（01–33）、蓝球选1个（01–16），单式一注。号码只保存在本页内存，不上传身份、不保存选号历史。</view>
+  <view class="card">
+    <view class="row"><view class="subtitle">红球</view><text class="count">红球 {{reds.length}}/6</text></view>
+    <view class="pick-grid">
+      <view wx:for="{{redCells}}" wx:key="number" class="pick red {{item.selected ? 'on' : ''}}" data-number="{{item.number}}" bindtap="toggleRed" aria-role="checkbox" aria-checked="{{item.selected}}" aria-label="{{item.label}}">
+        <text>{{item.text}}</text><text wx:if="{{item.selected}}" class="tick">✓</text>
+      </view>
+    </view>
+    <view class="row space-top"><view class="subtitle">蓝球</view><text class="count">蓝球 {{blue ? 1 : 0}}/1</text></view>
+    <view class="pick-grid">
+      <view wx:for="{{blueCells}}" wx:key="number" class="pick blue {{item.selected ? 'on' : ''}}" data-number="{{item.number}}" bindtap="toggleBlue" aria-role="radio" aria-checked="{{item.selected}}" aria-label="{{item.label}}">
+        <text>{{item.text}}</text><text wx:if="{{item.selected}}" class="tick">✓</text>
+      </view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="subtitle">单注预览</view>
+    <ticket-row wx:if="{{ready}}" red-balls="{{reds}}" blue-ball="{{blue}}" label="待查看结构的一注" />
+    <view wx:else class="muted">尚未选满：红球 {{reds.length}}/6，蓝球 {{blue ? 1 : 0}}/1。</view>
+    <view wx:if="{{error}}" class="notice warm space-top">{{error}}</view>
+    <view class="buttons">
+      <t-button theme="primary" loading="{{submitting}}" disabled="{{!ready || submitting}}" bindtap="check">查看结构</t-button>
+      <t-button theme="default" variant="outline" disabled="{{submitting}}" bindtap="reset">清空选择</t-button>
+    </view>
+  </view>
+  <view wx:if="{{result}}" class="card">
+    <view class="subtitle">组合结构</view>
+    <view wx:for="{{result.rows}}" wx:key="label" class="table-row"><view>{{item.label}}</view><view>{{item.value}}</view></view>
+    <view class="table-row"><view>一等奖理论概率</view><view>{{result.odds}}</view></view>
+    <view class="notice warm space-top">结构只是描述，不代表优劣；任何单式一注的一等奖概率都是 1/17,721,088。本页不提供评分、撞号热度或优选标签。</view>
+    <view wx:for="{{result.disclaimers}}" wx:key="*this" class="muted">· {{item}}</view>
+  </view>
+  <disclaimer-notice />
+</view>

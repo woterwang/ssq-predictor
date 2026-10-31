@@ -1,0 +1,44 @@
+<view class="page">
+  <view class="card accent-card">
+    <view class="title">当前线上策略：M0</view>
+    <view>首页推荐始终为服务器固化的M0均匀随机原件。M0是透明随机基线，不是提高中奖概率的预测模型；本页不提供选择策略重新推荐。</view>
+    <view class="muted space-top">说明版本：{{version}}（本地静态说明，非实时报告）</view>
+  </view>
+  <view class="card">
+    <view class="subtitle">理论概率（单式一注）</view>
+    <view class="table-row"><view>一等奖组合空间</view><view>C(33,6)×16 = 17,721,088</view></view>
+    <view class="table-row"><view>一等奖概率</view><view>1 / 17,721,088</view></view>
+    <view class="table-row"><view>每注平均红命中</view><view>6×6/33 ≈ 1.0909</view></view>
+    <view class="table-row"><view>蓝球命中率</view><view>1/16 = 6.25%</view></view>
+    <view class="muted space-top">理论均值描述长期平均，不是某几注的“预测准确率”。任何选号方式的单注概率都相同。</view>
+  </view>
+  <view class="card">
+    <view class="subtitle">模型目录</view>
+    <view wx:for="{{strategies}}" wx:key="code" class="strategy">
+      <view class="entry" data-code="{{item.code}}" bindtap="toggle" aria-role="button" aria-expanded="{{item.expanded}}">
+        <view><view class="strategy-name">{{item.name}}</view><t-tag theme="{{item.statusTheme}}" variant="light">{{item.status}}</t-tag></view>
+        <text>{{item.expanded ? '收起' : '展开'}}</text>
+      </view>
+      <view wx:if="{{item.expanded}}" class="strategy-body">
+        <view>{{item.principle}}</view>
+        <view class="muted space-top">固定参数</view>
+        <view wx:for="{{item.parameters}}" wx:for-item="parameter" wx:key="*this" class="bullet">· {{parameter}}</view>
+        <view class="muted space-top">局限</view>
+        <view wx:for="{{item.limitations}}" wx:for-item="limitation" wx:key="*this" class="bullet">· {{limitation}}</view>
+      </view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="subtitle">第7批历史比较（静态摘录）</view>
+    <view class="muted">{{comparison.range}}</view>
+    <view class="muted">来源：{{comparison.source}}</view>
+    <view class="table-row table-head"><view>模型</view><view>平均红命中</view><view>蓝命中率</view><view>红loss改善</view><view>蓝loss改善</view></view>
+    <view wx:for="{{comparison.rows}}" wx:key="model" class="table-row"><view>{{item.model}}</view><view>{{item.redHits}}</view><view>{{item.blueRate}}</view><view>{{item.redLoss}}</view><view>{{item.blueLoss}}</view></view>
+    <view class="notice warm space-top">{{comparison.conclusion}}</view>
+    <view class="action"><t-button theme="primary" variant="outline" bindtap="openBacktests">查看已保存回测汇总</t-button></view>
+  </view>
+  <view class="card">
+    <view class="notice warm">历史表现不保证未来结果；随机推荐不提高单注中奖概率。仅供研究与娱乐，不构成购彩建议。</view>
+    <view class="entry" bindtap="openAbout" aria-role="button">完整风险与隐私说明<text>›</text></view>
+  </view>
+</view>

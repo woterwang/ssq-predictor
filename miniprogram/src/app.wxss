@@ -1,0 +1,21 @@
+/* 公共设计令牌。使用原生导航与Tab安全区，不模拟微信胶囊。 */
+page { background: #f4f6f8; color: #172b4d; font-size: 28rpx; line-height: 1.65; --td-brand-color: #2864b7; --td-brand-color-light: #edf3fc; }
+.page { padding: 32rpx; padding-bottom: calc(40rpx + env(safe-area-inset-bottom)); }
+.card { background: #fff; border: 1rpx solid #e3e8ef; border-radius: 24rpx; padding: 28rpx; margin-bottom: 24rpx; }
+.accent-card { border-top: 6rpx solid #c93648; }
+.title { font-size: 36rpx; font-weight: 600; margin-bottom: 16rpx; }
+.subtitle { font-size: 32rpx; font-weight: 600; }
+.issue { font-size: 44rpx; font-weight: 600; font-variant-numeric: tabular-nums; }
+.muted { color: #58677c; font-size: 24rpx; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.notice { padding: 24rpx; border-radius: 16rpx; background: #edf3fc; color: #24486e; margin-bottom: 24rpx; font-size: 24rpx; }
+.warm { background: #fff4e5; color: #815021; }
+.divider { border-top: 1rpx solid #e3e8ef; margin: 24rpx 0; }
+.action { margin-top: 20rpx; }
+.entry { min-height: 88rpx; display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.entry + .entry { border-top: 1rpx solid #e3e8ef; }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin: 20rpx 0; }
+.table-row { display: flex; border-bottom: 1rpx solid #e3e8ef; padding: 16rpx 0; font-size: 24rpx; gap: 16rpx; }
+.table-row > view { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.hash { overflow-wrap: anywhere; word-break: break-all; font-family: monospace; font-size: 24rpx; }
+.space-top { margin-top: 20rpx; }

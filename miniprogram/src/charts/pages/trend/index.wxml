@@ -1,0 +1,33 @@
+<view class="page">
+  <view class="notice">走势只描述已开奖历史；组合结构不代表单注优越性，也不能用来推断下期号码。</view>
+  <view class="card">
+    <view class="title">结构走势</view>
+    <view class="chips">
+      <view wx:for="{{metrics}}" wx:key="key" class="chip {{metric === item.key ? 'active' : ''}}" data-key="{{item.key}}" bindtap="chooseMetric" aria-role="tab" aria-selected="{{metric === item.key}}">{{item.label}}</view>
+    </view>
+    <view class="chips space-top">
+      <view wx:for="{{windowOptions}}" wx:key="value" class="chip {{window === item.value ? 'active' : ''}}" data-window="{{item.value}}" bindtap="chooseWindow" aria-role="tab" aria-selected="{{window === item.value}}">{{item.label}}</view>
+    </view>
+    <view class="muted space-top">{{metricNote}}</view>
+  </view>
+  <request-state loading="{{loading}}" error="{{error}}" empty="{{loaded && total === 0}}" empty-text="所选窗口没有开奖样本" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{loaded && (error || loading)}}" class="notice warm">{{loading ? '正在读取' : '本次请求失败'}}，以下为上次取得的「{{shownWindowText}}」数据，不代表当前所选窗口。取得时间（设备记录）：{{lastUpdated}}</view>
+
+  <view wx:if="{{loaded && points.length > 0}}" class="card">
+    <view class="subtitle">{{metricLabel}}</view>
+    <view class="muted">{{rangeText}}</view>
+    <view class="muted">统计窗口：{{shownWindowText}} · 报告生成：{{generatedText}}</view>
+    <line-chart points="{{points}}" color="{{color}}" series-name="{{metricLabel}}" summary="{{summary}}" />
+    <view class="muted">{{summary}} 点按图表可查看单期数值。</view>
+    <view class="pager">
+      <t-button size="small" theme="primary" variant="outline" disabled="{{!canOlder}}" bindtap="older">较早100期</t-button>
+      <t-button size="small" theme="primary" variant="outline" disabled="{{!canNewer}}" bindtap="newer">较新100期</t-button>
+    </view>
+    <view class="entry" bindtap="toggleTable" aria-role="button" aria-expanded="{{showTable}}">{{showTable ? '收起数据表' : '查看数据表（与图表同区间）'}}<text>{{showTable ? '▲' : '▼'}}</text></view>
+    <block wx:if="{{showTable}}">
+      <view class="table-row table-head"><view>期号</view><view>{{metricLabel}}</view></view>
+      <view wx:for="{{points}}" wx:key="issue" class="table-row"><view>{{item.issue}}</view><view>{{item.value === null ? '—（无可比上期）' : item.value}}</view></view>
+    </block>
+  </view>
+  <disclaimer-notice />
+</view>

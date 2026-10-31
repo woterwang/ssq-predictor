@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="card">
+    <view class="title">推荐档案</view>
+    <view>只读查看服务器已固化的推荐原件。列表不推断开奖或核验状态，进入详情后再取得核验结果。</view>
+    <view class="muted space-top">每页20条，按排除式记录编号游标追加；没有生成、换号或策略切换操作。</view>
+  </view>
+  <request-state loading="{{refreshing || loadingMore}}" error="{{error}}" empty="{{loaded && items.length === 0}}" empty-text="服务器尚无固化推荐档案" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{items.length > 0 && (error || refreshing)}}" class="notice warm">{{refreshing ? '正在刷新' : '本次请求失败'}}，以下保留上次取得的列表，未确认最新档案状态。最近成功请求时间（设备记录）：{{lastUpdated}}。</view>
+  <view wx:for="{{items}}" wx:key="id" class="card archive-entry" data-id="{{item.id}}" bindtap="openVerification" aria-role="button" aria-label="查看第{{item.targetIssue}}期推荐原件与核验">
+    <view class="row"><view class="subtitle">第{{item.targetIssue}}期</view><text class="muted">详情 ›</text></view>
+    <view>{{item.strategyText}} · {{item.ticketCountText}}</view>
+    <view class="muted">目标开奖日期（北京时间）：{{item.targetDateText}}</view>
+    <view class="muted">固化时间：{{item.generatedAtText}}</view>
+    <view class="muted">记录编号：{{item.id}}；核验状态请进入详情读取。</view>
+  </view>
+  <view wx:if="{{paginationNote}}" class="notice warm">{{paginationNote}}</view>
+  <view class="card">
+    <view wx:if="{{loaded && !hasMore}}" class="muted">已到本次推荐档案列表末尾。</view>
+    <view wx:if="{{hasMore}}" class="action"><t-button theme="primary" variant="outline" loading="{{loadingMore}}" disabled="{{refreshing || loadingMore}}" bindtap="loadMore">{{error ? '重试加载下一页' : '加载更多（每页20条）'}}</t-button></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{refreshing}}" disabled="{{refreshing}}" bindtap="refresh">刷新档案列表</t-button></view>
+  </view>
+  <disclaimer-notice />
+</view>

@@ -7,6 +7,9 @@
     "node": ">=18.18"
   },
   "scripts": {
+    "dev": "tsx src/main.ts",
+    "start": "node dist/main.js",
+    "recommend:generate": "tsx scripts/generateRecommendation.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc -p tsconfig.build.json",
     "db:init": "tsx scripts/initDatabase.ts",
@@ -17,16 +20,27 @@
     "verify:basic": "tsx scripts/verifyBasicStatistics.ts",
     "analyze:research": "tsx scripts/analyzeResearch.ts",
     "verify:research": "tsx scripts/verifyResearch.ts",
+    "backtest:m0": "tsx scripts/runBacktest.ts",
+    "verify:backtest": "tsx scripts/verifyBacktest.ts",
+    "backtest:compare": "tsx scripts/compareBasicModels.ts",
+    "verify:models": "tsx scripts/verifyBasicModels.ts",
+    "verify:api": "tsx scripts/verifyApi.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
     "dotenv": "^16.4.7",
+    "express": "^4.22.3",
+    "express-rate-limit": "^8.7.2",
+    "helmet": "^8.3.0",
     "ml-matrix": "^6.12.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/express": "^4.17.25",
     "@types/node": "^18.19.0",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.3.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^3.0.0"

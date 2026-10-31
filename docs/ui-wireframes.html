@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>双色球数据观察 · 八页设计预览</title>
+  <style>
+    /* 离线设计稿，不引入框架/图表/网络字体；球与按钮均为静态示例。 */
+    :root { color-scheme: light; --ink:#172b4d; --muted:#58677c; --line:#e3e8ef; --red:#c93648; --blue:#2864b7; --green:#176848; --bg:#f4f6f8; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:var(--ink); background:#eef2f6; line-height:1.55; }
+    a { color:var(--blue); text-underline-offset:3px; }
+    .review-head { padding:44px 40px 28px; background:#fff; border-bottom:1px solid var(--line); }
+    .eyebrow { font-size:12px; letter-spacing:2px; color:var(--blue); font-weight:700; }
+    h1 { font-size:32px; margin:10px 0; letter-spacing:-1px; }
+    .review-head p { max-width:950px; color:var(--muted); margin:8px 0; font-size:14px; }
+    .review-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+    .review-nav a { padding:8px 14px; border:1px solid var(--line); border-radius:24px; text-decoration:none; font-size:13px; }
+    .review-nav a:hover { background:#edf3fc; border-color:var(--blue); }
+    .legend { display:flex; gap:20px; flex-wrap:wrap; padding:18px 40px; font-size:13px; color:var(--muted); }
+    .legend b { color:var(--ink); }
+    main { max-width:1640px; margin:auto; padding:12px 28px 48px; display:grid; grid-template-columns:repeat(4,minmax(280px,1fr)); gap:32px 22px; }
+    .sheet { min-width:0; scroll-margin-top:16px; }
+    .sheet-label { display:flex; justify-content:space-between; align-items:center; margin:0 4px 12px; }
+    .sheet-label h2 { font-size:16px; margin:0; }
+    .sheet-label span { font-size:11px; color:var(--muted); }
+    .phone { background:var(--bg); border:1px solid #d6dfeb; border-radius:28px; overflow:hidden; box-shadow:0 12px 30px #172b4d09; }
+    .status-bar { display:flex; justify-content:space-between; padding:12px 20px 6px; background:#fff; font-size:11px; font-weight:700; }
+    .app-nav { background:#fff; min-height:50px; padding:12px 16px; text-align:center; font-size:16px; font-weight:700; position:relative; border-bottom:1px solid var(--line); }
+    .back { position:absolute; left:16px; font-size:17px; }
+    .demo-bar { background:#edf3fc; color:var(--blue); font-size:10px; text-align:center; padding:5px 8px; letter-spacing:.5px; }
+    .content { padding:14px; min-height:690px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px; }
+    .accent-card { border-top:3px solid var(--red); }
+    .card h3 { font-size:14px; margin:0 0 8px; }
+    .card p { margin:6px 0; font-size:12px; color:var(--muted); }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .tag { display:inline-block; border-radius:20px; padding:3px 8px; color:var(--blue); background:#edf3fc; font-size:10px; white-space:nowrap; }
+    .tag.green { color:var(--green); background:#eaf5ef; }
+    .tag.neutral { color:var(--muted); background:#f0f3f7; }
+    .tag.amber { color:#8a551a; background:#fff4e5; }
+    .issue { font-size:23px; font-weight:700; letter-spacing:-.6px; }
+    .caption { font-size:10px; color:var(--muted); }
+    .label { font-size:10px; color:var(--muted); margin-bottom:4px; }
+    .notice { background:#edf3fc; border-radius:10px; padding:10px; font-size:11px; color:#24486e; margin-bottom:12px; }
+    .notice.warm { background:#fff4e5; color:#815021; }
+    .ticket { display:flex; gap:5px; align-items:center; margin:9px 0; }
+    .ball { display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:29px; height:29px; border-radius:50%; background:var(--red); color:#fff; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+    .ball.blue { background:var(--blue); margin-left:5px; }
+    .ball.outline { background:#fff; border:1px solid var(--line); color:var(--ink); }
+    .ball.match { outline:2px solid #172b4d; outline-offset:2px; }
+    .ball.small { width:25px; height:25px; font-size:10px; }
+    .divider { height:1px; background:var(--line); margin:12px 0; }
+    .action { width:100%; border:0; border-radius:9px; padding:11px 9px; background:var(--blue); color:#fff; font:inherit; font-size:12px; text-align:center; }
+    .action:disabled { opacity:1; cursor:default; }
+    .action.secondary { background:#edf3fc; color:var(--blue); }
+    .action.muted { background:#edf0f4; color:var(--muted); }
+    .pair { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .mini-card { background:#f4f6f8; padding:10px; border-radius:9px; }
+    .value { font-size:21px; font-weight:700; font-variant-numeric:tabular-nums; }
+    .audit { background:#f7f9fb; border:1px dashed var(--line); padding:10px; border-radius:9px; font-size:10px; color:var(--muted); }
+    .hash { overflow-wrap:anywhere; font-family:ui-monospace,monospace; font-size:10px; }
+    .link-row { display:flex; justify-content:space-between; font-size:12px; padding:10px 0; color:var(--ink); }
+    .link-row + .link-row { border-top:1px solid var(--line); }
+    .risk { font-size:10px; color:var(--muted); padding:8px 4px 13px; line-height:1.6; }
+    .tabbar { display:grid; grid-template-columns:repeat(4,1fr); background:#fff; border-top:1px solid var(--line); padding:10px 4px 18px; color:var(--muted); font-size:10px; text-align:center; }
+    .tabbar b { display:block; font-size:16px; height:23px; font-weight:400; }
+    .tabbar .active { color:var(--blue); font-weight:700; }
+    .segment { display:flex; background:#eaf0f6; padding:3px; border-radius:10px; margin-bottom:12px; font-size:11px; color:var(--muted); }
+    .segment span { flex:1; text-align:center; padding:6px 0; border-radius:7px; }
+    .segment .selected { background:#fff; color:var(--blue); box-shadow:0 1px 4px #172b4d0c; }
+    .input-demo { display:flex; justify-content:space-between; border:1px solid var(--line); background:#fff; padding:11px; border-radius:10px; font-size:11px; color:var(--muted); margin-bottom:12px; }
+    .draw-row { padding:10px 0; }
+    .draw-row + .draw-row { border-top:1px solid var(--line); }
+    .draw-row .row { font-size:12px; }
+    table { width:100%; border-collapse:collapse; font-size:10px; }
+    th,td { padding:8px 3px; text-align:right; border-bottom:1px solid var(--line); }
+    th:first-child,td:first-child { text-align:left; }
+    th { color:var(--muted); font-weight:400; }
+    .number-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:7px 3px; margin:12px 0; }
+    .number-cell { text-align:center; font-size:9px; color:var(--muted); }
+    .number-cell .ball { width:28px; height:28px; }
+    .number-cell small { display:block; font-size:9px; margin-top:2px; }
+    .cold { background:#fff0f2; border:1px solid #dfb5bd; color:#8c3040; }
+    .normal { background:#f2f4f7; border:1px solid var(--line); color:var(--ink); }
+    .hot { background:var(--red); }
+    .simple-bar { height:7px; background:#edf0f5; border-radius:4px; margin:7px 0; }
+    .simple-bar i { display:block; width:60%; height:100%; background:var(--blue); border-radius:4px; }
+    .pending-chart { border:1px dashed #cad5e4; background:#f7f9fc; text-align:center; padding:18px 10px; border-radius:10px; font-size:11px; color:var(--muted); }
+    .step-number { display:inline-flex; align-items:center; justify-content:center; font-size:10px; width:23px; height:23px; border-radius:7px; background:#edf3fc; color:var(--blue); margin-right:8px; }
+    .coverage { color:var(--muted); font-size:10px; margin:8px 0 12px; }
+    .sheet-note { margin:12px 5px 0; color:var(--muted); font-size:12px; }
+    footer { border-top:1px solid var(--line); background:#fff; padding:26px 40px; color:var(--muted); font-size:13px; }
+    @media(max-width:1300px) { main { grid-template-columns:repeat(3,minmax(280px,1fr)); } }
+    @media(max-width:1020px) { main { grid-template-columns:repeat(2,minmax(280px,1fr)); } }
+    @media(max-width:650px) { main { grid-template-columns:minmax(0,390px); justify-content:center; padding:10px 16px 32px; } .review-head { padding:28px 20px 22px; } h1 { font-size:26px; } .legend { padding:16px 20px; } footer { padding:24px 20px; } }
+  </style>
+</head>
+<body>
+  <header class="review-head">
+    <div class="eyebrow">UI REVIEW / 第 10 批 · 待确认</div>
+    <h1>双色球数据观察</h1>
+    <p>让数据、随机基线与固化记录都可被理解。浅色观察工具风格，原生微信小程序 + TypeScript + TDesign。</p>
+    <p><strong>这是离线排版设计稿，不是小程序、不是实时数据。</strong>所有手机内数字、号码和日期均为示例；无网络请求，按钮不可操作，不生成推荐或选号结果。</p>
+    <nav class="review-nav" aria-label="设计稿页面索引">
+      <a href="#p01">01 推荐首页</a><a href="#p02">02 历史开奖</a><a href="#p03">03 号码分析</a><a href="#p04">04 策略说明</a>
+      <a href="#p05">05 回测看板</a><a href="#p06">06 推荐核验</a><a href="#p07">07 选号体检</a><a href="#p08">08 关于与免责</a>
+    </nav>
+  </header>
+  <div class="legend"><span><b>导航</b>　首页 / 历史 / 分析 / 关于</span><span><b>原则</b>　M0透明基线 · 不换号 · 未知不补零</span><span><b>边界</b>　无购彩 / 无支付 / 不承诺收益</span></div>
+  <main>
+    <section class="sheet" id="p01">
+      <div class="sheet-label"><h2>01 / 推荐首页</h2><span>主包 · 首页Tab</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav">双色球数据观察</div><div class="demo-bar">仅展示排版 · 全部为示例数据</div>
+        <div class="content">
+          <div class="notice">随机推荐不提高单注中奖概率。<br>仅供研究与娱乐，不构成购彩建议。</div>
+          <div class="card accent-card">
+            <div class="row"><span class="label">下一期 · 北京时间</span><span class="tag green">原件已生成</span></div>
+            <div class="issue">第 2026125 期</div><p>2026-11-01　21:15 开奖</p>
+            <div class="divider"></div><div class="row"><h3>M0 · 均匀随机基线</h3><span class="caption">示例 5 注</span></div>
+            <div class="ticket" data-ticket="02,12,18,19,21,33|11"></div><div class="ticket" data-ticket="07,08,13,19,22,30|15"></div>
+            <div class="ticket" data-ticket="06,13,15,19,30,32|07"></div><div class="ticket" data-ticket="01,03,16,23,28,30|14"></div>
+            <div class="ticket" data-ticket="03,13,20,23,28,29|02"></div>
+            <p>单注理论一等奖概率 1 / 17,721,088</p><button class="action secondary" disabled>复制已有号码（设计占位）</button>
+          </div>
+          <div class="card"><div class="link-row"><span>查看往期核验</span><span>›</span></div><div class="link-row"><span>为什么只使用 M0？</span><span>›</span></div>
+            <div class="audit">生成信息（可展开）<br>版本 v1.0.0 · 种子 · 完整内容哈希<br>20:00 为保守生成截止，非官方停售时间。</div></div>
+          <div class="card"><div class="row"><h3>最新开奖 · 示例</h3><span class="caption">2026124　›</span></div><div class="ticket" data-ticket="03,11,17,22,23,29|09"></div></div>
+          <div class="risk">记录写入后不可改号。本地哈希不等于第三方可信时间戳。</div>
+        </div><div class="tabbar" data-active="0"></div>
+      </div><p class="sheet-note">GET只读刷新。尚未生成、已过截止、开奖待同步分别展示；没有“再换一组”。</p>
+    </section>
+    <section class="sheet" id="p02">
+      <div class="sheet-label"><h2>02 / 历史开奖</h2><span>主包 · 历史Tab / 详情</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav">历史开奖</div><div class="demo-bar">仅展示排版 · 全部为示例数据</div>
+        <div class="content">
+          <div class="input-demo"><span>输入完整期号，如 2026124</span><span>查询</span></div><div class="coverage">当前仅收录2013年起可用开奖数据</div>
+          <div class="card">
+            <div class="draw-row"><div class="row"><strong>2026124</strong><span class="caption">2026-10-29　›</span></div><div class="ticket" data-ticket="03,11,17,22,23,29|09"></div></div>
+            <div class="draw-row"><div class="row"><strong>2026123</strong><span class="caption">示例记录　›</span></div><div class="ticket" data-ticket="01,06,13,20,27,31|05"></div></div>
+            <button class="action secondary" disabled>加载更多（游标分页）</button>
+          </div>
+          <div class="card"><div class="row"><h3>单期详情模板</h3><span class="tag neutral">常规奖项待补全</span></div>
+            <div class="pair"><div class="mini-card"><div class="label">和值</div><div class="value">105</div></div><div class="mini-card"><div class="label">奇偶比</div><div class="value">5 : 1</div></div></div>
+            <p>跨度26 · 分区2 : 2 : 2 · AC值7</p><div class="divider"></div>
+            <div class="row"><span class="caption">销售额 / 奖池</span><span class="caption">待公布 / 待公布</span></div>
+            <table aria-label="奖级表示例"><thead><tr><th>奖级</th><th>注数</th><th>单注奖金</th></tr></thead><tbody><tr><td>一等奖</td><td>待公布</td><td>待公布</td></tr><tr><td>二等奖</td><td>待公布</td><td>待公布</td></tr><tr><td>三等奖</td><td>待公布</td><td>待公布</td></tr></tbody></table>
+          </div><div class="notice warm">未知金额不补0。常规注数齐全不代表历史派奖收益规则已经核实。</div>
+          <div class="risk">号码按升序展示，不冒充官方摇出顺序；数据缺失与未中奖不能混称。</div>
+        </div><div class="tabbar" data-active="1"></div>
+      </div><p class="sheet-note">列表与单期详情是同一模块的两个路由；精确期号查询，不假设现有API支持日期筛选。</p>
+    </section>
+    <section class="sheet" id="p03">
+      <div class="sheet-label"><h2>03 / 号码分析</h2><span>分析Tab · 走势图分包</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav">号码分析</div><div class="demo-bar">仅展示排版 · 网格为示例分级</div>
+        <div class="content">
+          <div class="segment"><span class="selected">红球</span><span>蓝球</span></div><div class="segment"><span>全部可用</span><span>30期</span><span class="selected">100期</span><span>300期</span></div>
+          <div class="coverage">近100期 · 截至2026124 · 示例筛选状态</div>
+          <div class="card"><div class="row"><h3>频次冷热</h3><span class="caption">冷 / 常 / 热</span></div><p>描述历史频次，不代表下期出现概率。</p><div class="number-grid" data-number-grid="analysis"></div>
+            <div class="audit">点号码进入详情：频次、当前遗漏、完整间隔均值与分布。</div></div>
+          <div class="card"><h3>遗漏口径</h3><table aria-label="遗漏占位示例"><thead><tr><th>号码</th><th>当前</th><th>完整均值</th><th>观测最大</th></tr></thead><tbody><tr><td>01</td><td>≥100</td><td>—</td><td>100</td></tr><tr><td>02</td><td>3</td><td>4.6</td><td>18</td></tr></tbody></table><p>≥表示当前遗漏下界；观测最大仅指窗口内长度，完整均值不含两端截断间隔。</p></div>
+          <div class="card"><div class="link-row"><span>和值 / 奇偶 / 分区走势</span><span>›</span></div><div class="link-row"><span>历史回测</span><span>›</span></div><div class="link-row"><span>选号体检</span><span>›</span></div></div>
+          <div class="risk">网格与表格使用view；复杂走势延后在图表分包接入真实数据，缺期不补零。</div>
+        </div><div class="tabbar" data-active="2"></div>
+      </div><p class="sheet-note">33红 / 16蓝可切换。走势图进入子页，初次展示有限可见范围，保留实际样本说明。</p>
+    </section>
+    <section class="sheet" id="p04">
+      <div class="sheet-label"><h2>04 / 策略说明</h2><span>研究分包 · 说明子页</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav"><span class="back" aria-hidden="true">‹</span>策略说明</div><div class="demo-bar">仅展示排版 · 静态研究说明</div>
+        <div class="content">
+          <div class="card"><div class="row"><h3>M0 · 均匀随机</h3><span class="tag green">当前线上基线</span></div><p>从33个红球不放回选择6个，从16个蓝球选择1个；多注去掉整票重复。</p><div class="mini-card"><div class="label">所有合法单注理论一等奖概率相同</div><div class="value">1 / 17,721,088</div></div><p>保留版本、随机种子和生成时间，公开核验而非承诺预测。</p></div>
+          <div class="card"><h3>模型目录</h3><div class="link-row"><span>M1 平滑频次</span><span class="tag neutral">探索对照</span></div><div class="link-row"><span>M2 时间衰减</span><span class="tag neutral">探索对照</span></div><div class="link-row"><span>M3 冷热遗漏</span><span class="tag amber">反例对照</span></div><div class="link-row"><span>M4 / M5</span><span class="tag neutral">暂不准入</span></div></div>
+          <div class="card"><h3>参数说明模板</h3><p>固定窗口300期 · 公平先验100期<br>M2半衰期100 · M3遗漏指数0.25</p><p>权重与红球包含边际不是同一概念。去重与重叠约束后的条件分布也会变化。</p></div>
+          <div class="notice warm">固定历史对照未建立优于M0的证据，不提供切换模型立即生成的操作。</div>
+          <button class="action secondary" disabled>查看历史回测（设计占位）</button><div class="risk">模型说明公开局限；完整配对比较为静态研究资料，当前未接入公开比较端点。</div>
+        </div>
+      </div><p class="sheet-note">展示原理、固定参数和未准入原因，不把对照实验当作更高胜率推荐。</p>
+    </section>
+    <section class="sheet" id="p05">
+      <div class="sheet-label"><h2>05 / 回测看板</h2><span>研究分包 · 汇总首版</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav"><span class="back" aria-hidden="true">‹</span>历史回测</div><div class="demo-bar">仅展示排版 · 不是实时回测结果</div>
+        <div class="content">
+          <div class="notice warm">历史已被查看，本页是探索回放。<br>随机重复不是新的独立历史样本。</div>
+          <div class="card"><div class="row"><h3>M0 · 保存运行示例</h3><span class="tag green">成功</span></div><p>2013031—2026124 · 2,052期<br>每期5注 · 接口未提供重复次数</p><div class="pair"><div class="mini-card"><div class="label">平均红球命中</div><div class="value">1.0928</div><div class="caption">理论 1.0909</div></div><div class="mini-card"><div class="label">蓝球命中率</div><div class="value">6.258%</div><div class="caption">理论 6.25%</div></div></div></div>
+          <div class="card"><h3>概率评分 · 越低越好</h3><table aria-label="概率评分排版示例"><tbody><tr><td>红球边际 log loss</td><td>0.47414</td></tr><tr><td>红球 Brier（33项均值）</td><td>0.14876</td></tr><tr><td>蓝球分类 log loss</td><td>2.77259</td></tr><tr><td>蓝球 Brier（16类求和）</td><td>0.93750</td></tr></tbody></table><p>红/蓝口径不同，不横向排序强弱。</p></div>
+          <div class="card"><h3>区间与收益</h3><p>随机重复结果区间与MC均值区间分别展示，不称历史模型优势。</p><div class="row"><span class="caption">正式 ROI</span><span class="tag amber">暂不提供</span></div><p>174期暂停收益核算（示例口径）。历史派奖资格仍待核实。</p></div>
+          <div class="pending-chart">逐期曲线 / 配对显著性<br><strong>公开接口未提供，首版不绘假数据</strong></div>
+          <div class="risk">只展示已保存运行。不同样本/成本任务不能混排排行榜；收益重尾不能证明模型有效。</div>
+        </div>
+      </div><p class="sheet-note">汇总卡与区间表使用现有API；逐期曲线与跨模型推断先补只读接口，后画图。</p>
+    </section>
+    <section class="sheet" id="p06">
+      <div class="sheet-label"><h2>06 / 推荐核验</h2><span>主包 · 档案 / 核验详情</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav"><span class="back" aria-hidden="true">‹</span>推荐核验</div><div class="demo-bar">待开奖布局示例 · 非实时接口结果</div>
+        <div class="content">
+          <div class="card"><div class="row"><h3>第2026125期 · 档案示例</h3><span class="tag amber">待开奖 / 待核验</span></div><p>2026-10-31设计时点尚未开奖。<br>下方号码仅用于排版，不是原件。</p><div class="label">固化号码行模板</div><div class="ticket" data-ticket="01,06,13,20,27,31|05"></div><div class="notice">目标开奖号码尚未取得，<br>不预判命中、奖级或奖金。</div></div>
+          <div class="card"><h3>逐注核验 · 等待实际结果</h3><table aria-label="待核验状态示例"><thead><tr><th>注</th><th>红命中</th><th>蓝命中</th><th>奖级</th></tr></thead><tbody><tr><td>1</td><td>待核验</td><td>—</td><td>—</td></tr><tr><td>2</td><td>待核验</td><td>—</td><td>—</td></tr></tbody></table><p>真实核验后用描边和文字标识命中；当前开奖修正但尚无匹配核验时，显示“当前版本待核验”，不展示过时结果。</p></div>
+          <div class="card"><h3>审计信息</h3><div class="audit">实际实现展示：生成时间 / 核验时间<br>策略版本 / 种子 / 完整可复制哈希<br><span class="hash">[完整SHA-256占位，不是校验成功标识]</span></div><div class="link-row"><span>历史修正版本</span><span>›</span></div><p>“当前版”按当前开奖指纹匹配，不等于最后插入的历史版本。</p></div>
+          <div class="risk">哈希证明内容一致，不是第三方开奖前可信时间戳；无匹配核验不代表未中奖。</div>
+        </div>
+      </div><p class="sheet-note">列表只显示推荐档案，点详情才请求核验与目标开奖，避免N+1请求及假核验状态。</p>
+    </section>
+    <section class="sheet" id="p07">
+      <div class="sheet-label"><h2>07 / 选号体检</h2><span>研究分包 · 单注结构</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav"><span class="back" aria-hidden="true">‹</span>选号体检</div><div class="demo-bar">静态选择示例 · 不接受真实选号</div>
+        <div class="content">
+          <div class="notice">只分析组合结构，不测胜率，<br>不提供优选或劣选标签。</div>
+          <div class="card"><div class="row"><h3><span class="step-number">1</span>红球选择</h3><span class="tag neutral">6 / 6 · 示例</span></div><div class="number-grid" data-number-grid="selection"></div><div class="divider"></div><div class="row"><h3><span class="step-number">2</span>蓝球选择</h3><span class="tag neutral">1 / 1 · 示例</span></div><div class="number-grid" data-number-grid="blue-selection"></div></div>
+          <div class="card"><div class="label">单注预览 · 示例</div><div class="ticket" data-ticket="01,06,13,20,27,31|05"></div><div class="pair"><button class="action muted" disabled>重置</button><button class="action" disabled>查看结构</button></div></div>
+          <div class="card"><h3>理论概率不因结构变化</h3><div class="value">1 / 17,721,088</div><p>所有合法单注一等奖概率相同。<br>当前接口不提供撞号热度或优选评分。</p></div>
+          <div class="risk">正式页面编辑号码后清除旧结果；红6/蓝1合法才可提交，不上传身份、不保存选号历史。</div>
+        </div>
+      </div><p class="sheet-note">触控实现使用扩大点击外框与文字计数；预览网格只是视觉，不可点击。</p>
+    </section>
+    <section class="sheet" id="p08">
+      <div class="sheet-label"><h2>08 / 关于与免责</h2><span>主包 · 关于Tab</span></div>
+      <div class="phone">
+        <div class="status-bar"><span>9:41</span><span>设计框架</span></div><div class="app-nav">关于</div><div class="demo-bar">设计说明 · 未获平台上线审批</div>
+        <div class="content">
+          <div class="card accent-card"><h3>双色球数据观察</h3><p>数据透明 · 随机基线 · 固化可核验</p><div class="tag neutral">原生小程序设计 · 待确认</div></div>
+          <div class="card"><h3>数据与记录</h3><div class="link-row"><span>数据来源</span><span class="caption">中国福彩网</span></div><div class="link-row"><span>当前范围</span><span class="caption">仅2013年起可用历史</span></div><div class="link-row"><span>策略说明</span><span>›</span></div><div class="link-row"><span>推荐档案与核验</span><span>›</span></div></div>
+          <div class="card"><h3>风险与边界</h3><p>仅供数据研究与娱乐，不构成购彩建议，不承诺中奖或收益。</p><p>不提供代购、支付或资金交易，不引导增加投注。未成年人不得购彩及兑奖。</p><p>20:00是保守生成截止；本地内容哈希不提供第三方可信时间戳。</p></div>
+          <div class="card"><h3>隐私说明</h3><p>首版不登录、不取位置/通讯录、不读系统剪贴板，复制由用户主动触发。</p><p>后端按IP限流；正式访问日志策略与保存期限上线前明确，不宣称绝对零采集。</p></div>
+          <div class="notice warm">微信类目、主体与上线形态仍待核实。<br>不宣称已审核通过或官方认证。</div>
+          <div class="risk">正式版必须使用已配置、已备案HTTPS服务域名；公众客户端没有后台管理入口。</div>
+        </div><div class="tabbar" data-active="3"></div>
+      </div><p class="sheet-note">风险短句常驻，完整隐私与来源说明可展开；不使用官方授权未明的标志。</p>
+    </section>
+  </main>
+  <footer><strong>审阅范围：</strong>配色、导航、信息层级和状态口径。<br>设计待确认；无网络连接，无真实接口，无推荐/体检交互。微信真机安全区、触控、可访问性与分包大小在实现阶段验收。</footer>
+  <script>
+    // 仅组装重复的静态设计元素。没有fetch、计时器、存储或后端管理调用。
+    document.querySelectorAll('[data-ticket]').forEach(element => {
+      const [redPart, blue] = element.dataset.ticket.split('|');
+      const matched = (element.dataset.matches || '').split(',');
+      const reds = redPart.split(',');
+      element.setAttribute('role', 'img');
+      element.setAttribute('aria-label', `排版示例，红球${reds.join('、')}，蓝球${blue}${element.dataset.matches ? '，命中示例见相邻文字' : ''}`);
+      [...reds, blue].forEach((number, index) => {
+        const ball = document.createElement('span');
+        ball.className = `ball${index === 6 ? ' blue' : ''}${index < 6 && matched.includes(number) ? ' match' : ''}`;
+        ball.textContent = number; ball.setAttribute('aria-hidden', 'true'); element.appendChild(ball);
+      });
+    });
+    document.querySelectorAll('[data-number-grid]').forEach(grid => {
+      const mode = grid.dataset.numberGrid;
+      const count = mode === 'blue-selection' ? 16 : 33;
+      const chosen = mode === 'blue-selection' ? [5] : [1,6,13,20,27,31];
+      for (let number = 1; number <= count; number++) {
+        const cell = document.createElement('div'); cell.className = 'number-cell';
+        const ball = document.createElement('span');
+        const heat = number % 5 === 0 ? 'hot' : number % 3 === 0 ? 'cold' : 'normal';
+        ball.className = mode === 'analysis' ? `ball ${heat}` : `ball${chosen.includes(number) ? (mode === 'blue-selection' ? ' blue' : '') : ' outline'}`;
+        if (mode === 'blue-selection') ball.style.marginLeft = '0';
+        ball.textContent = String(number).padStart(2, '0');
+        cell.appendChild(ball);
+        const label = document.createElement('small');
+        label.textContent = mode === 'analysis' ? ({hot:'热',cold:'冷',normal:'常'}[heat]) : (chosen.includes(number) ? '已选 ✓' : '未选');
+        cell.appendChild(label); grid.appendChild(cell);
+      }
+    });
+    document.querySelectorAll('[data-active]').forEach(tabbar => {
+      ['首页','历史','分析','关于'].forEach((label, index) => {
+        const tab = document.createElement('div'); tab.className = index === Number(tabbar.dataset.active) ? 'active' : '';
+        const icon = document.createElement('b'); icon.textContent = ['⌂','≡','▤','○'][index]; icon.setAttribute('aria-hidden', 'true');
+        tab.appendChild(icon); tab.appendChild(document.createTextNode(label)); tabbar.appendChild(tab);
+      });
+    });
+  </script>
+</body>
+</html>

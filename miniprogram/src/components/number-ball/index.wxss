@@ -1,0 +1,5 @@
+.ball { width: 64rpx; height: 64rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 28rpx; font-weight: 600; position: relative; font-variant-numeric: tabular-nums; }
+.red { background: #c93648; }
+.blue { background: #2864b7; }
+.matched { outline: 4rpx solid #172b4d; outline-offset: 4rpx; }
+.match-mark { position: absolute; right: -8rpx; top: -12rpx; background: #172b4d; border-radius: 50%; width: 28rpx; height: 28rpx; font-size: 22rpx; text-align: center; }

@@ -42,6 +42,9 @@ export interface AppConfig {
   cwlRequestTimeoutMs: number;
   /** 管理接口密钥；未配置时为 null，届时管理接口应拒绝所有请求 */
   adminApiKey: string | null;
+  /** 默认只监听本机；生产由HTTPS反向代理访问，不自动信任代理IP头。 */
+  apiHost: string;
+  apiPort: number;
 }
 
 /** 请求官方接口的最小间隔下限：1 秒，避免对官方站点造成压力 */
@@ -113,9 +116,17 @@ function resolvePathFromServerRoot(configuredPath: string): string {
  */
 function loadAppConfig(): AppConfig {
   const adminApiKeySetting = readStringSetting('ADMIN_API_KEY', '');
+  const runtimeEnvironment = readRuntimeEnvironment();
+  const apiPort = readPositiveIntegerSetting('API_PORT', 3001);
+  if (apiPort > 65535) throw new Error('API_PORT 不能大于65535');
+  if (runtimeEnvironment === 'production' && adminApiKeySetting !== '' && adminApiKeySetting.length < 32) {
+    throw new Error('生产管理密钥至少32个字符；未配置则禁用管理接口');
+  }
 
   return {
-    runtimeEnvironment: readRuntimeEnvironment(),
+    runtimeEnvironment,
+    apiHost: readStringSetting('API_HOST', '127.0.0.1'),
+    apiPort,
     databaseFilePath: resolvePathFromServerRoot(readStringSetting('DATABASE_FILE_PATH', 'data/ssq.db')),
     rawResponseArchiveDir: resolvePathFromServerRoot(
       readStringSetting('RAW_RESPONSE_ARCHIVE_DIR', 'data/raw_responses'),

@@ -1,0 +1,1 @@
+Component({ methods: { openAbout() { wx.switchTab({ url: '/pages/about/index' }); } } });

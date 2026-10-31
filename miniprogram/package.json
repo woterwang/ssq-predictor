@@ -1,0 +1,24 @@
+{
+  "name": "ssq-observer-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "双色球数据观察原生微信小程序",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.cjs",
+    "verify": "node scripts/verify.cjs",
+    "verify:live": "node scripts/verify-live.cjs"
+  },
+  "dependencies": {
+    "echarts": "6.1.0",
+    "tdesign-miniprogram": "1.17.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "miniprogram-api-typings": "5.2.3",
+    "typescript": "~5.7.3"
+  }
+}

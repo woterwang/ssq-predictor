@@ -1,0 +1,4 @@
+{
+  "desc": "研究工具尚在开发阶段，不开放搜索索引",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

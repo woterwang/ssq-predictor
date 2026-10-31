@@ -1,0 +1,1 @@
+<view class="metric"><view class="label">{{label}}</view><view class="value">{{value || '未提供'}}</view></view>

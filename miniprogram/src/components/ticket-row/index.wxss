@@ -1,0 +1,4 @@
+.ticket { margin: 24rpx 0; }
+.label { font-size: 24rpx; color: #58677c; margin-bottom: 12rpx; }
+.numbers { display: flex; flex-wrap: wrap; align-items: center; gap: 8rpx; }
+.blue-gap { margin-left: 16rpx; }

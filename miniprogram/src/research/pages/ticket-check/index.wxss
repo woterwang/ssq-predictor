@@ -1,0 +1,10 @@
+/* 候选号未选为白底描边，选中为实体球加勾选；点击外框不小于88rpx。 */
+.count { font-size: 26rpx; color: #40516b; font-variant-numeric: tabular-nums; }
+.pick-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8rpx; margin-top: 16rpx; }
+.pick { height: 88rpx; display: flex; align-items: center; justify-content: center; position: relative; font-size: 28rpx; font-weight: 600; font-variant-numeric: tabular-nums; border-radius: 50%; border: 3rpx solid; background: #fff; box-sizing: border-box; }
+.pick.red { color: #c93648; border-color: #c93648; }
+.pick.blue { color: #2864b7; border-color: #2864b7; }
+.pick.red.on { background: #c93648; color: #fff; }
+.pick.blue.on { background: #2864b7; color: #fff; }
+.tick { position: absolute; right: 0; top: 0; width: 28rpx; height: 28rpx; border-radius: 50%; background: #172b4d; color: #fff; font-size: 20rpx; line-height: 28rpx; text-align: center; }
+.buttons { display: flex; gap: 16rpx; margin-top: 24rpx; }

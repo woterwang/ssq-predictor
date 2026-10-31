@@ -1,0 +1,7 @@
+<view class="ticket" aria-label="{{accessibleLabel}}">
+  <view class="label">{{ticketLabel}}</view>
+  <view class="numbers">
+    <view wx:for="{{redCells}}" wx:key="number"><number-ball number="{{item.number}}" matched="{{item.matched}}" /></view>
+    <view class="blue-gap"><number-ball number="{{blueBall}}" color="blue" matched="{{matchedBlue}}" /></view>
+  </view>
+</view>

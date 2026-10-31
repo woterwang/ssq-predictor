@@ -1,0 +1,3 @@
+<view class="ball {{color === 'blue' ? 'blue' : 'red'}} {{matched ? 'matched' : ''}}" aria-role="img" aria-label="{{accessibleLabel}}">
+  <text>{{numberText}}</text><text wx:if="{{matched}}" class="match-mark">✓</text>
+</view>

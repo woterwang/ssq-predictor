@@ -1,0 +1,3 @@
+/* 整卡是详情入口，号码区保持共享组件的可读尺寸。 */
+.draw-entry { min-height: 180rpx; }
+.draw-entry:active { background: #f8faff; }

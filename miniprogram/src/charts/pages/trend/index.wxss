@@ -1,0 +1,5 @@
+.chips { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.chip { min-height: 64rpx; padding: 0 20rpx; border: 1rpx solid #e3e8ef; border-radius: 999rpx; display: flex; align-items: center; font-size: 24rpx; color: #40516b; }
+.chip.active { border-color: #2864b7; background: #edf3fc; color: #2864b7; font-weight: 600; }
+.pager { display: flex; gap: 16rpx; margin: 16rpx 0; }
+.table-head { font-weight: 600; color: #172b4d; }

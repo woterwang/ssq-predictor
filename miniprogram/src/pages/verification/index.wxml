@@ -1,0 +1,68 @@
+<view class="page">
+  <request-state loading="{{loading}}" error="{{error}}" empty="{{notFound}}" empty-text="尚未收录该推荐记录，请从推荐档案选择。" last-updated="{{verificationUpdatedAt}}" bind:retry="refresh" />
+  <view wx:if="{{view && (error || loading)}}" class="notice warm">{{loading ? '正在刷新' : '本次核验刷新失败'}}，以下暂保留上次取得的原件与核验记录，不代表当前最新状态。核验取得时间：{{verificationUpdatedAt}}。</view>
+  <block wx:if="{{view}}">
+    <view class="card accent-card">
+      <view class="title">第{{view.recommendation.targetIssue}}期固化原件</view>
+      <view>{{view.recommendation.strategyName}} · {{view.recommendation.strategyVersion}}</view>
+      <view class="muted">目标开奖日期（北京时间）：{{targetDateText}}</view>
+      <view class="muted">实际固化时间：{{generatedAtText}}</view>
+      <view wx:for="{{frozenTickets}}" wx:key="ticketKey" class="frozen-ticket">
+        <ticket-row red-balls="{{item.redBalls}}" blue-ball="{{item.blueBall}}" index="{{item.ticketIndex}}" />
+        <block wx:if="{{showOutcomes}}">
+          <view class="outcome-text">{{item.outcomeText}} · {{item.gradeText}}</view>
+          <view class="muted">单注税前公告金额回放：{{item.amountText}}（非实际兑奖）</view>
+        </block>
+        <view wx:else class="muted">固化原件保留；当前不展示命中、奖级或收益判断。</view>
+      </view>
+      <view class="action"><t-button theme="primary" variant="outline" bindtap="copyFrozenTickets">复制固化号码</t-button></view>
+      <audit-details record="{{view.recommendation}}" />
+    </view>
+    <view class="card">
+      <view class="title">目标开奖与当前核验</view>
+      <t-tag theme="warning" variant="light">{{statusLabel}}</t-tag>
+      <view class="space-top">{{statusMessage}}</view>
+      <view wx:if="{{latestProblem}}" class="notice warm space-top">{{latestProblem}}</view>
+      <view wx:if="{{latestVerifiedAtText}}" class="muted space-top">latest核验时间：{{latestVerifiedAtText}}</view>
+      <view wx:if="{{latestFingerprint}}" class="hash">latest开奖指纹：{{latestFingerprint}}</view>
+      <view class="muted space-top">核验响应取得时间（设备记录）：{{verificationUpdatedAt}}</view>
+      <request-state error="{{drawError}}" empty="{{drawPending}}" empty-text="目标开奖待开奖 / 待同步，暂不能判断中奖与否。" last-updated="{{drawUpdatedAt}}" bind:retry="refresh" />
+      <view wx:if="{{drawError && targetDraw}}" class="notice warm">以下仅为上次取得的目标开奖号；取得时间：{{drawUpdatedAt}}。本次读取失败，不用于当前核验判断。</view>
+      <block wx:if="{{targetDraw}}">
+        <view class="divider" />
+        <view class="subtitle">独立取得的第{{targetDraw.issue}}期开奖结果</view>
+        <view class="muted">开奖日期（北京时间）：{{targetDraw.drawDate}}</view>
+        <ticket-row red-balls="{{targetDraw.redBalls}}" blue-ball="{{targetDraw.blueBall}}" label="独立取得的开奖号码（升序）" />
+        <view class="muted">开奖响应取得时间（设备记录）：{{drawUpdatedAt}}</view>
+        <view class="notice warm space-top">目标开奖与核验来自两次独立请求，期间可能修正。为避免跨快照误标，固化号码不叠加红蓝球命中标记；命中文字仅复述服务端latest，不声称对应此处独立号码快照。</view>
+      </block>
+    </view>
+    <view class="card">
+      <view class="title">收益口径与审计提醒</view>
+      <view class="metrics"><metric-card label="正式ROI" value="{{formalRoiText}}" /></view>
+      <block wx:if="{{replayAvailable}}">
+        <view class="subtitle">税前公告金额回放：{{replayAmountText}}</view>
+        <view class="notice warm space-top">仅复述核验响应时点通过资格审计的公告金额；非实际兑奖，不估计奖金、税后金额或未来收益。</view>
+      </block>
+      <view wx:else class="notice warm">税前公告金额回放暂不提供：当前核验未确认、资格未通过或公告金额尚缺失。不得按空值推断0收益。</view>
+      <view wx:for="{{auditWarnings}}" wx:key="key" class="audit-warning">{{item.text}}</view>
+      <view class="muted space-top">公告回放不等于实际兑奖。常规奖级完整也不意味着派奖规则与历史资格已核实；正式ROI始终暂不提供。</view>
+    </view>
+    <view class="card">
+      <view class="title">追加核验版本记录</view>
+      <view class="notice">以下仅为审计历史，按接口追加顺序保留；不以首条历史记录选择当前结果。A→B→A修正时也只读取latest，latest为空不代表未中奖。</view>
+      <view wx:if="{{versions.length === 0}}" class="muted">尚无追加核验版本。</view>
+      <view wx:for="{{versions}}" wx:key="id" class="version-entry">
+        <view>历史记录 #{{item.id}} · 第{{item.targetIssue}}期</view>
+        <view class="muted">核验时间：{{item.verifiedAtText}}</view>
+        <view class="hash">开奖指纹：{{item.fingerprint}}</view>
+        <view class="muted">只作历史审计，不代表当前核验结果。</view>
+      </view>
+    </view>
+  </block>
+  <view class="card">
+    <t-button wx:if="{{routeValid}}" theme="primary" variant="outline" loading="{{loading}}" disabled="{{loading}}" bindtap="refresh">只读刷新核验与目标开奖</t-button>
+    <view class="action"><t-button theme="primary" variant="outline" bindtap="openRecommendations">查看推荐档案</t-button></view>
+  </view>
+  <disclaimer-notice />
+</view>

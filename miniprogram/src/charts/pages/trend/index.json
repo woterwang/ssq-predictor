@@ -1,0 +1,4 @@
+{
+  "navigationBarTitleText": "结构走势",
+  "usingComponents": { "line-chart": "../../components/line-chart/index" }
+}

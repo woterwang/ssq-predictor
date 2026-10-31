@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="card">
+    <view class="title">历史开奖</view>
+    <view class="muted">中国福彩网公开数据，2013年起可用历史；不等同全部双色球历史。</view>
+    <view class="space-top"><t-input value="{{issueInput}}" label="精确期号" placeholder="请输入7位期号" type="number" maxlength="7" bind:change="onIssueChange" /></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{searching}}" disabled="{{searching}}" bindtap="findIssue">查询该期</t-button></view>
+    <view wx:if="{{queryError}}" class="notice warm space-top">{{queryError}}</view>
+  </view>
+  <request-state loading="{{refreshing || loadingMore}}" error="{{error}}" empty="{{loaded && draws.length === 0}}" empty-text="服务器尚无收录开奖" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{draws.length > 0 && (error || refreshing)}}" class="notice warm">{{refreshing ? '正在刷新' : '本次请求失败'}}，以下保留上次取得列表，不代表当前最新状态。最近成功请求时间（设备记录）：{{lastUpdated}}；重试追加不会跳过失败页。</view>
+  <view wx:for="{{draws}}" wx:key="issue" class="card draw-entry" data-issue="{{item.issue}}" bindtap="openDraw" aria-role="button" aria-label="查看第{{item.issue}}期开奖详情">
+    <view class="row"><view class="subtitle">第{{item.issue}}期</view><text class="muted">详情 ›</text></view>
+    <view class="muted">开奖日期（北京时间）：{{item.drawDate}}</view>
+    <ticket-row red-balls="{{item.redBalls}}" blue-ball="{{item.blueBall}}" label="开奖号码（升序）" />
+  </view>
+  <view wx:if="{{paginationNote}}" class="notice warm">{{paginationNote}}</view>
+  <view class="card">
+    <view wx:if="{{loaded && !hasMore}}" class="muted">已到本次列表末尾；未收录历史不自动补造。</view>
+    <view wx:if="{{hasMore}}" class="action"><t-button theme="primary" variant="outline" loading="{{loadingMore}}" disabled="{{refreshing || loadingMore}}" bindtap="loadMore">{{error ? '重试加载下一页' : '加载更多（每页20条）'}}</t-button></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{refreshing}}" disabled="{{refreshing}}" bindtap="refresh">刷新列表</t-button></view>
+  </view>
+  <disclaimer-notice />
+</view>

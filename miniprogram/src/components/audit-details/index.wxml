@@ -1,0 +1,11 @@
+<view wx:if="{{record}}" class="audit">
+  <view class="heading" bindtap="toggle" aria-role="button" aria-label="展开或收起生成审计信息">生成审计信息 <text>{{expanded ? '收起 −' : '展开 +'}}</text></view>
+  <block wx:if="{{expanded}}">
+    <view>固化时间：{{generatedText}}</view><view>保守生成截止：{{deadlineText}}（非官方停售）</view>
+    <view>源期号：{{record.sourceLatestIssue || '旧记录未提供'}}</view><view>策略：{{record.strategyName}} · {{record.strategyVersion}}</view>
+    <view>随机种子：{{record.seed}}</view><view class="hash">公开参数：{{paramsText}}</view>
+    <view class="hash">SHA-256原件字段：{{record.contentHash}}</view>
+    <view class="copy"><t-button theme="primary" variant="outline" bindtap="copyHash">复制完整内容哈希</t-button></view>
+    <view class="warning">本地内容哈希与时间不是第三方可信开奖前时间戳，也不代表预测更准确。</view>
+  </block>
+</view>

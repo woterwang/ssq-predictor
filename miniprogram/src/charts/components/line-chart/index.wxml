@@ -1,0 +1,4 @@
+<view class="chart" aria-label="{{seriesName}}折线图。{{summary}}请使用下方数据表获取逐期数值。">
+  <canvas type="2d" id="trend-canvas" class="canvas" bindtouchstart="touchStart" bindtouchend="touchEnd"></canvas>
+  <view wx:if="{{failed}}" class="failed">当前环境未能创建Canvas 2D图表，请查看数据表。</view>
+</view>

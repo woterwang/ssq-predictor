@@ -1,0 +1,67 @@
+<view class="page">
+  <view class="notice warm">探索性历史回放：只展示服务器已保存的运行汇总，不启动回测；历史表现不保证未来结果，正式ROI暂不提供。</view>
+  <request-state loading="{{refreshing && !loaded}}" error="{{error}}" empty="{{loaded && items.length === 0}}" empty-text="服务器尚无已保存回测" last-updated="{{lastUpdated}}" bind:retry="refresh" />
+  <view wx:if="{{loaded && error}}" class="notice warm">本次请求失败，以下为上次取得的回测记录。取得时间（设备记录）：{{lastUpdated}}</view>
+
+  <view wx:if="{{selected}}" class="card accent-card">
+    <view class="row"><view class="subtitle">{{selected.title}}</view><t-tag theme="{{selected.statusTheme}}" variant="light">{{selected.statusText}}</t-tag></view>
+    <view class="muted">{{selected.range}}</view>
+    <view class="table-row"><view>训练首期</view><view>{{selected.trainingFirstIssue}}</view></view>
+    <view class="table-row"><view>评估期数</view><view>{{selected.evaluatedIssues}}</view></view>
+    <view class="table-row"><view>种子</view><view>{{selected.seed}}</view></view>
+    <view class="table-row"><view>使用前瞻保留段</view><view>{{selected.holdout}}</view></view>
+    <view class="table-row"><view>开始 / 结束</view><view>{{selected.startedAt}} / {{selected.finishedAt}}</view></view>
+    <view class="table-row"><view>定义版本</view><view class="hash">{{selected.definitionVersion}}</view></view>
+    <view class="table-row"><view>数据指纹</view><view class="hash">{{selected.dataFingerprint}}</view></view>
+    <view class="muted space-top">公开接口未返回随机重复次数与完整策略参数，故不显示这些值，也不提供参数复现。</view>
+  </view>
+
+  <block wx:if="{{selected && !selected.hasSummary}}">
+    <view class="card"><view class="notice warm">该运行{{selected.statusText}}，没有可展示的汇总指标；不画指标或补零。</view></view>
+  </block>
+  <block wx:if="{{selected && selected.hasSummary}}">
+    <view class="card">
+      <view class="subtitle">命中（随机重复分布）</view>
+      <view wx:for="{{selected.hitRows}}" wx:key="key" class="metric-block">
+        <view class="row"><view>{{item.label}}</view><view class="value">{{item.mean}}</view></view>
+        <view class="muted">{{item.definition}}</view>
+        <view class="table-row"><view>重复间最小–最大</view><view>{{item.range}}</view></view>
+        <view class="table-row"><view>整段随机重复结果区间（95%）</view><view>{{item.outcomeInterval}}</view></view>
+        <view class="table-row"><view>随机重复均值MC区间（95%）</view><view>{{item.meanInterval}}</view></view>
+      </view>
+      <view class="table-row"><view>理论参考：每注平均红命中</view><view>{{selected.theoreticalRedHits}}</view></view>
+      <view class="table-row"><view>理论参考：蓝球命中率</view><view>{{selected.theoreticalBlueRate}}</view></view>
+      <view class="muted space-top">区间描述随机抽样的波动，不是“历史模型优势区间”或获利区间。</view>
+    </view>
+    <view class="card">
+      <view class="subtitle">概率评分</view>
+      <view wx:for="{{selected.scoreRows}}" wx:key="key" class="table-row"><view>{{item.label}}<view class="muted">{{item.definition}}</view></view><view>{{item.mean}}</view></view>
+      <view class="muted space-top">红球为33项边际二元口径、蓝球为16类分类口径，两者不同，不跨颜色比较强弱。</view>
+      <view class="table-row"><view>首重复校准尾概率（红 / 蓝）</view><view>{{selected.redTailP}} / {{selected.blueTailP}}</view></view>
+      <view class="muted">只用于检验抽样框架，不是策略优越性p值。</view>
+    </view>
+    <view class="card">
+      <view class="subtitle">收益说明</view>
+      <view class="table-row"><view>可审计期数</view><view>{{selected.eligibleIssues}}</view></view>
+      <view class="table-row"><view>暂停核算期数</view><view>{{selected.withheldIssues}}</view></view>
+      <view class="table-row"><view>正式ROI</view><view>暂不提供</view></view>
+      <view class="muted space-top">含加奖/派奖或奖金字段异常的期整期暂停核算；不以子集奖金均值推算全收益，也不画收益曲线。</view>
+    </view>
+  </block>
+
+  <view class="card">
+    <view class="subtitle">已保存运行</view>
+    <view class="muted">点选查看单个运行。不同运行的数据、区间与重复设置可能不同，首版不做跨模型排行。</view>
+    <view wx:for="{{items}}" wx:key="id" class="entry run {{selected && selected.id === item.id ? 'picked' : ''}}" data-id="{{item.id}}" bindtap="selectRun" aria-role="button" aria-label="查看回测{{item.title}}，{{item.statusText}}">
+      <view><view class="run-title">{{item.title}}</view><view class="muted">{{item.range}}</view></view>
+      <t-tag theme="{{item.statusTheme}}" variant="light">{{item.statusText}}</t-tag>
+    </view>
+    <view wx:if="{{paginationNote}}" class="notice warm space-top">{{paginationNote}}</view>
+    <view wx:if="{{hasMore}}" class="action"><t-button theme="primary" variant="outline" loading="{{loadingMore}}" disabled="{{refreshing || loadingMore}}" bindtap="loadMore">{{error ? '重试加载下一页' : '加载更多（每页20条）'}}</t-button></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{refreshing}}" disabled="{{refreshing}}" bindtap="refresh">刷新列表</t-button></view>
+  </view>
+  <view class="card">
+    <view class="muted">接口缺口：逐期命中/收益曲线、跨模型配对区间及多重校正p值尚无公开只读接口，本页不绘制示例曲线。</view>
+    <view class="entry" bindtap="openStrategy" aria-role="button">策略说明与第7批静态比较<text>›</text></view>
+  </view>
+</view>

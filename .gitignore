@@ -8,3 +8,8 @@ dist/
 # 运行时数据：数据库、原始响应存档、报告输出、日志
 server/data/
 *.log
+
+# 微信开发者工具本地设置与按需生成的依赖目录
+project.private.config.json
+miniprogram/project.private.config.json
+miniprogram_npm/

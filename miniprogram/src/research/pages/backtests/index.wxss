@@ -1,0 +1,4 @@
+.metric-block + .metric-block { margin-top: 24rpx; }
+.value { font-size: 32rpx; font-weight: 600; font-variant-numeric: tabular-nums; }
+.run.picked { background: #edf3fc; }
+.run-title { font-weight: 600; overflow-wrap: anywhere; }

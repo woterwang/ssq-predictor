@@ -1,0 +1,26 @@
+{
+  "description": "双色球数据观察；先在miniprogram目录执行npm run build",
+  "miniprogramRoot": "miniprogram/dist/",
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "uglifyFileName": false,
+    "enhance": true,
+    "packNpmRelationList": [],
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "useCompilerPlugins": false
+  },
+  "compileType": "miniprogram",
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "appid": "wx7d65924a0cfcb30c",
+  "editorSetting": {}
+}

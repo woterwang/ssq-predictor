@@ -14,7 +14,7 @@
  */
 import { createCwlApiClientFromConfig } from '../collector/cwlApiClient';
 import type { DrawNoticePageFetcher } from '../collector/cwlApiTypes';
-import { syncLatestDraws, type IncrementalSyncResult } from '../collector/incrementalSyncService';
+import type { IncrementalSyncResult } from '../collector/incrementalSyncService';
 import {
   findLatestScheduledDrawDateOnOrBefore,
   findSuspensionPeriodContaining,
@@ -28,6 +28,7 @@ import { DRAW_WEEKDAYS } from '../domain/lottery';
 import { logger } from '../utils/logger';
 import { addDaysToDate, formatBeijingDateTimeForLog, getBeijingDateString } from '../utils/time';
 import { startBeijingTimeScheduler, type BeijingScheduleRule, type RunningScheduler } from './beijingTimeScheduler';
+import { processRecommendationLifecycle, runIncrementalSyncWorkflow, SyncAlreadyRunningError } from './syncWorkflow';
 
 /**
  * 同步类型：
@@ -107,13 +108,16 @@ export async function runDrawSync(context: DrawSyncJobContext, runKind: DrawSync
       }
       const latestDraw = findLatestDraw(database);
       if (latestDraw !== null && latestDraw.drawDate === today && latestDraw.isPrizeDetailComplete) {
-        logger.info(`今晚开奖（${latestDraw.issue}）已入库且奖级明细完整，跳过同步`);
+        const lifecycle = processRecommendationLifecycle(database, suspensionPeriods, context.now());
+        logger.info(`今晚开奖（${latestDraw.issue}）已完整，跳过网络同步；核验新增${lifecycle.verification.verifiedCount}条，下一期推荐状态${lifecycle.generationStatus}`);
         return;
       }
     }
 
-    const syncResult = await syncLatestDraws(database, context.fetchPage);
+    const { synchronization: syncResult, lifecycle } = await runIncrementalSyncWorkflow(context);
     logSyncResult(syncResult);
+    logger.info(`推荐核验：新增${lifecycle.verification.verifiedCount}、待开奖${lifecycle.verification.pendingCount}、跳过${lifecycle.verification.skippedCount}；下一期推荐${lifecycle.generationStatus}`);
+    if (lifecycle.verification.skippedCount > 0) logger.alert('有推荐未通过核验条件，请检查元数据与内容哈希');
 
     // 应已取得的最近一期开奖日期：当晚同步看今天；每日补拉看昨天及以前最近的开奖日
     const expectedDrawDate = isEveningRun
@@ -136,6 +140,10 @@ export async function runDrawSync(context: DrawSyncJobContext, runKind: DrawSync
       logger.warn(`期号 ${latestDrawAfterSync.issue} 的奖级明细仍未完整，后续同步会继续补全`);
     }
   } catch (error) {
+    if (error instanceof SyncAlreadyRunningError) {
+      logger.warn('管理接口或其他任务正在同步，本次定时任务跳过');
+      return;
+    }
     const errorMessage = (error as Error).message;
     logger.error(`同步失败：${errorMessage}`);
 

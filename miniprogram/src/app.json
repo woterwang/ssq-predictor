@@ -1,0 +1,45 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/history/index",
+    "pages/analysis/index",
+    "pages/about/index",
+    "pages/draw-detail/index",
+    "pages/recommendations/index",
+    "pages/verification/index"
+  ],
+  "subPackages": [
+    { "root": "research", "name": "research", "pages": ["pages/strategy/index", "pages/backtests/index", "pages/ticket-check/index"] },
+    { "root": "charts", "name": "charts", "pages": ["pages/trend/index"] }
+  ],
+  "window": {
+    "navigationBarTitleText": "双色球数据观察",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F4F6F8",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#58677C",
+    "selectedColor": "#2864B7",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/history/index", "text": "历史" },
+      { "pagePath": "pages/analysis/index", "text": "分析" },
+      { "pagePath": "pages/about/index", "text": "关于" }
+    ]
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "usingComponents": {
+    "ticket-row": "/components/ticket-row/index",
+    "disclaimer-notice": "/components/disclaimer-notice/index",
+    "request-state": "/components/request-state/index",
+    "audit-details": "/components/audit-details/index",
+    "metric-card": "/components/metric-card/index",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-tag": "tdesign-miniprogram/tag/tag"
+  }
+}

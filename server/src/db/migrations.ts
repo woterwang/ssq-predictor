@@ -214,6 +214,52 @@ export const SCHEMA_MIGRATIONS: readonly SchemaMigration[] = [
         CHECK (raw_record_json IS NULL OR json_valid(raw_record_json));
     `,
   },
+  {
+    version: 3,
+    description: '增加不可改写的前瞻评估段登记，防止事后移动留出边界',
+    upgradeSql: `
+      CREATE TABLE backtest_holdout_policy (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        policy_version TEXT NOT NULL,
+        start_issue TEXT NOT NULL,
+        registered_at TEXT NOT NULL,
+        rationale TEXT NOT NULL,
+        CHECK (start_issue GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+      );
+      CREATE TRIGGER backtest_holdout_forbid_update BEFORE UPDATE ON backtest_holdout_policy
+      BEGIN SELECT RAISE(ABORT, '前瞻边界已登记，禁止改写'); END;
+      CREATE TRIGGER backtest_holdout_forbid_delete BEFORE DELETE ON backtest_holdout_policy
+      BEGIN SELECT RAISE(ABORT, '前瞻边界已登记，禁止删除'); END;
+    `,
+  },
+  {
+    version: 4,
+    description: '推荐追加目标日期、保守生成截止及源期号；核验按开奖指纹追加不可改写版本',
+    upgradeSql: `
+      -- 旧推荐没有可验证的时间边界，不回填/伪造元数据，保留 NULL 并拒绝自动核验。
+      ALTER TABLE recommendations ADD COLUMN target_draw_date TEXT
+        CHECK (target_draw_date IS NULL OR target_draw_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]');
+      ALTER TABLE recommendations ADD COLUMN generation_deadline TEXT;
+      ALTER TABLE recommendations ADD COLUMN source_latest_issue TEXT
+        CHECK (source_latest_issue IS NULL OR source_latest_issue GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9]');
+      -- 既有 UNIQUE(target_issue, strategy_name) 保留：不同版本也不能重复生成同一期同名策略。
+      CREATE TABLE recommendation_verifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recommendation_id INTEGER NOT NULL REFERENCES recommendations(id),
+        draw_fingerprint TEXT NOT NULL CHECK (length(draw_fingerprint) = 64),
+        result_json TEXT NOT NULL CHECK (json_valid(result_json)),
+        verified_at TEXT NOT NULL,
+        UNIQUE (recommendation_id, draw_fingerprint)
+      );
+      CREATE TRIGGER recommendation_verifications_forbid_update
+      BEFORE UPDATE ON recommendation_verifications
+      BEGIN SELECT RAISE(ABORT, '推荐核验版本写入后只读，禁止修改'); END;
+      CREATE TRIGGER recommendation_verifications_forbid_delete
+      BEFORE DELETE ON recommendation_verifications
+      BEGIN SELECT RAISE(ABORT, '推荐核验版本写入后只读，禁止删除'); END;
+      -- 内容哈希只能证明内容一致；本地时间/只读触发器不是第三方开奖前可信时间戳。
+    `,
+  },
 ];
 
 /**

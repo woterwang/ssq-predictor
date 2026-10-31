@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="card">
+    <view class="title">关于双色球数据观察</view>
+    <view>透明随机推荐与历史研究工具。当前为开发版本，尚未完成真机、隐私与平台合规验收。</view>
+    <view class="entry" bindtap="openRecommendations" aria-role="button">推荐档案与核验<text>›</text></view>
+    <view class="entry" bindtap="openResearch" aria-role="button">策略说明<text>›</text></view>
+    <view class="entry" bindtap="openHistory" aria-role="button">历史开奖<text>›</text></view>
+  </view>
+  <view class="card">
+    <view class="title">数据来源与范围</view>
+    <view>开奖数据来自中国福彩网公开接口。当前可用历史从2013年起，2003—2012年历史尚未补齐。</view>
+    <view class="muted space-top">未请求历史总量或完整范围，故不展示实时累计期数。日期、金额及奖级以实际接口响应为准；缺失不补零。</view>
+    <view class="space-top">内容哈希用于核对原件内容；生成时间为服务器记录，不是第三方可信时间戳或官方认证。</view>
+    <view class="notice warm space-top">常规奖级数据完整，不等于历史派奖资格与收益规则已审核。正式ROI暂不提供。</view>
+  </view>
+  <view class="card">
+    <view class="title">隐私说明</view>
+    <view>首版不提供登录，不读取位置、通讯录或系统剪贴板，不持久化用户选号历史。复制号码或哈希须由用户主动点击，仅写入剪贴板。</view>
+    <view class="space-top">页面会向配置的公众服务发送只读网络请求。后端处理IP用于请求限流；生产访问日志策略与保存期限须在上线前补全，不承诺绝对零采集。</view>
+    <view class="muted space-top">公众页面不携带管理密钥，不提供生成、换号、回测启动或管理入口。</view>
+  </view>
+  <view class="card">
+    <view class="title">风险与合规</view>
+    <view class="notice warm">仅供数据研究与娱乐，不构成购彩建议，不承诺中奖或收益；未成年人不得购彩及兑奖。</view>
+    <view>不提供代购、支付、资金交易、购彩跳转或鼓励加注的交互。随机推荐不提高单注中奖概率，历史表现不保证未来结果。</view>
+    <view class="space-top"><t-tag theme="warning" variant="light">上线主体与类目待核实</t-tag></view>
+    <view class="muted space-top">小程序类目、主体、上线形态、合法HTTPS域名与真机验收仍待核实，不表示已审核通过或官方授权。</view>
+  </view>
+  <disclaimer-notice />
+</view>
