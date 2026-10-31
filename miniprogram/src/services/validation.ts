@@ -1,5 +1,5 @@
 import type { PublicDraw, Ticket, Recommendation, NextRecommendation, VerificationView, VerificationRecord,
-  AnalysisReport, DrawFeatures, HeatLabel, NumberStatistics, BacktestRun, TicketCheckResult } from '../types/api';
+  AnalysisReport, DrawFeatures, HeatLabel, NumberStatistics, BacktestRun, TicketCheckResult, RecommendationSummary } from '../types/api';
 
 /** 在网络边界检查展示所依赖的字段，拒绝缺字段/假零，不把TS断言当运行时验证。 */
 function object(value: unknown): Record<string, unknown> {
@@ -108,6 +108,32 @@ export function validateVerification(value: unknown): VerificationView {
   }
   // 当前latest由服务器按当前指纹匹配；禁止以versions[0]替代。
   return value as VerificationView;
+}
+/** 计数必须互相吻合；空样本平均值必须为null，非空必须与总数一致，避免假零或拼凑数据。 */
+export function validateRecommendationSummary(value: unknown): RecommendationSummary {
+  const record = object(value);
+  const issues = object(record.issues), tickets = object(record.tickets), theoretical = object(record.theoretical), payout = object(record.payout);
+  ensure(text(record.definitionVersion) && integer(record.recommendationCount) && texts(record.limitations));
+  ensure(integer(issues.verified) && integer(issues.awaitingDraw) && integer(issues.awaitingVerification)
+    && issues.verified + issues.awaitingDraw + issues.awaitingVerification === record.recommendationCount);
+  const count = tickets.verifiedTicketCount;
+  ensure(integer(count) && integer(tickets.totalRedHits, 0, Number(count) * 6) && integer(tickets.blueHitCount, 0, Number(count)));
+  ensure(count === 0 ? tickets.averageRedHits === null && tickets.blueHitRate === null
+    : tickets.averageRedHits === Number(tickets.totalRedHits) / count && tickets.blueHitRate === Number(tickets.blueHitCount) / count);
+  const distribution = tickets.redHitDistribution;
+  ensure(Array.isArray(distribution) && distribution.length === 7 && distribution.every(item => integer(item))
+    && distribution.reduce((sum: number, item: number) => sum + item, 0) === count
+    && distribution.reduce((sum: number, item: number, hits) => sum + item * hits, 0) === tickets.totalRedHits);
+  const prizes = object(tickets.prizeCounts);
+  const grades = ['1', '2', '3', '4', '5', '6', 'fortune', 'none'];
+  ensure(Object.keys(prizes).length === grades.length && grades.every(grade => integer(prizes[grade]))
+    && grades.reduce((sum, grade) => sum + Number(prizes[grade]), 0) === count);
+  ensure(finite(theoretical.averageRedHits) && finite(theoretical.blueHitRate));
+  ensure(integer(payout.accountedIssueCount) && integer(payout.withheldIssueCount)
+    && payout.accountedIssueCount + payout.withheldIssueCount === issues.verified
+    && nullableMoney(payout.accountedCostYuan) && payout.accountedCostYuan !== null
+    && nullableMoney(payout.announcedPrizeReplayYuan) && payout.announcedPrizeReplayYuan !== null && payout.formalRoi === null);
+  return value as RecommendationSummary;
 }
 
 function integer(value: unknown, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): value is number {

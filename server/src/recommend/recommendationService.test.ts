@@ -12,6 +12,7 @@ import { assertRecommendationContentHash, canonicalJson, computeDrawFingerprint,
   computeRecommendationContentHash } from './recommendationHash';
 import { generateNextRecommendation, getRecommendationVerification,
   verifyPendingRecommendations } from './recommendationService';
+import { summarizeRecommendationPerformance } from './recommendationSummary';
 import type { RecommendationOptions, RecommendationRecord } from './recommendationTypes';
 
 const databases: SqliteDatabase[] = [];
@@ -333,5 +334,46 @@ describe('开奖后追加核验', () => {
     expect(verifyPendingRecommendations(database, afterTargetDraw)).toMatchObject({ verifiedCount: 0, skippedCount: 1 });
     expect(() => database.prepare('UPDATE recommendations SET target_draw_date = ?').run('2026-11-01')).toThrow(/禁止修改/);
     expect(applyPendingMigrations(database).appliedMigrations).toHaveLength(0);
+  });
+});
+
+describe('推荐成绩汇总', () => {
+  it('空库与待开奖不造0均值', () => {
+    const empty = summarizeRecommendationPerformance(memoryDatabase());
+    expect(empty).toMatchObject({ recommendationCount: 0, issues: { verified: 0, awaitingDraw: 0, awaitingVerification: 0 },
+      tickets: { verifiedTicketCount: 0, averageRedHits: null, blueHitRate: null }, payout: { formalRoi: null } });
+    const database = memoryDatabase();
+    generate(database);
+    expect(summarizeRecommendationPerformance(database)).toMatchObject({ recommendationCount: 1,
+      issues: { verified: 0, awaitingDraw: 1, awaitingVerification: 0 }, tickets: { averageRedHits: null } });
+  });
+
+  it('A→B→A修正只用当前指纹核验；奖金审计未通过整期暂停核算', () => {
+    const database = memoryDatabase();
+    const record = generate(database);
+    const drawA = matchingDraw(record);
+    insertDraw(database, drawA, afterTargetDraw.toISOString());
+    const summaryBefore = summarizeRecommendationPerformance(database);
+    expect(summaryBefore.issues).toEqual({ verified: 0, awaitingDraw: 0, awaitingVerification: 1 });
+    verifyPendingRecommendations(database, afterTargetDraw);
+    const withheld = summarizeRecommendationPerformance(database);
+    const outcomes = listRecommendationVerifications(database, record.id)[0].result.outcomes;
+    const redHits = outcomes.reduce((sum, outcome) => sum + outcome.redHits, 0);
+    expect(withheld.issues.verified).toBe(1);
+    expect(withheld.tickets).toMatchObject({ verifiedTicketCount: 5, totalRedHits: redHits, averageRedHits: redHits / 5 });
+    expect(withheld.tickets.redHitDistribution.reduce((sum, count) => sum + count, 0)).toBe(5);
+    expect(withheld.tickets.redHitDistribution[6]).toBeGreaterThanOrEqual(1);
+    expect(withheld.tickets.prizeCounts['1']).toBe(1);
+    expect(withheld.payout).toEqual({ accountedIssueCount: 0, withheldIssueCount: 1, accountedCostYuan: 0,
+      announcedPrizeReplayYuan: 0, formalRoi: null });
+    updateDrawPrizeDetail(database, matchingDraw(record, true), afterTargetDraw.toISOString());
+    expect(summarizeRecommendationPerformance(database).issues).toEqual({ verified: 0, awaitingDraw: 0, awaitingVerification: 1 });
+    verifyPendingRecommendations(database, afterTargetDraw);
+    const accounted = summarizeRecommendationPerformance(database).payout;
+    expect(accounted).toMatchObject({ accountedIssueCount: 1, withheldIssueCount: 0, accountedCostYuan: 10 });
+    expect(accounted.announcedPrizeReplayYuan).toBeGreaterThanOrEqual(5000000);
+    updateDrawPrizeDetail(database, drawA, afterTargetDraw.toISOString());
+    expect(summarizeRecommendationPerformance(database)).toEqual(withheld);
+    expect(listRecommendationVerifications(database, record.id)).toHaveLength(2);
   });
 });

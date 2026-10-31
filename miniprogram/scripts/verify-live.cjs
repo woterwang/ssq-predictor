@@ -62,8 +62,7 @@ async function main() {
   check(detail.data.draw?.issue === home.data.latestDraw.issue && detail.data.prizeRows.length === 6 && detail.data.error === '', '真实单期详情/六奖级/结构');
   const archives = instantiatePage('recommendations');
   await archives.refresh();
-  check(archives.data.items.length > 0 && archives.data.error === '', '真实固化档案');
-  const verification = instantiatePage('verification');
+  check(archives.data.items.length > 0 && archives.data.error === '', '真实固化档案');  check(archives.data.summary !== null && archives.data.summaryError === '', `真实成绩汇总通过前端验证：${archives.data.summaryError}`);  const verification = instantiatePage('verification');
   verification.requestedId = archives.data.items[0].id; verification.data.routeValid = true;
   await verification.refresh();
   check(verification.data.view !== null && verification.data.error === '', '真实推荐核验页面映射');

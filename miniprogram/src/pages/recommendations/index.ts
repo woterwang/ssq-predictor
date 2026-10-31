@@ -1,6 +1,7 @@
 import { api, errorMessage } from '../../services/api';
-import type { Recommendation } from '../../types/api';
-import { formatBeijingTime } from '../../utils/presentation';
+import type { PrizeGrade, Recommendation, RecommendationSummary } from '../../types/api';
+import { formatAmount, formatBeijingTime, prizeGradeText } from '../../utils/presentation';
+import { fixed, percent } from '../../utils/analysis';
 
 interface ArchiveRow {
   id: number;
@@ -22,10 +23,34 @@ function presentArchive(record: Recommendation): ArchiveRow {
   };
 }
 
+const GRADES: PrizeGrade[] = [1, 2, 3, 4, 5, 6, 'fortune', 'none'];
+function presentSummary(summary: RecommendationSummary) {
+  const { issues, tickets, theoretical, payout } = summary;
+  return {
+    statusText: `共${summary.recommendationCount}期档案：已核验${issues.verified}期 · 待开奖${issues.awaitingDraw}期 · 已开奖待核验${issues.awaitingVerification}期`,
+    hasSample: tickets.verifiedTicketCount > 0,
+    ticketText: `已核验${tickets.verifiedTicketCount}注（仅当前开奖版本）`,
+    redText: `平均红球命中 ${fixed(tickets.averageRedHits, 3)}（随机理论 ${fixed(theoretical.averageRedHits, 3)}）`,
+    blueText: `蓝球命中率 ${percent(tickets.blueHitRate)}（随机理论 ${percent(theoretical.blueHitRate)}）`,
+    distributionText: tickets.redHitDistribution.map((count, hits) => `${hits}红×${count}`).join(' · '),
+    prizeText: GRADES.map(grade => `${prizeGradeText(grade)} ${tickets.prizeCounts[String(grade)]}`).join(' · '),
+    payoutText: payout.accountedIssueCount > 0
+      ? `奖金审计通过${payout.accountedIssueCount}期：成本 ${formatAmount(payout.accountedCostYuan)}，公告税前奖金回放 ${formatAmount(payout.announcedPrizeReplayYuan)}`
+      : '暂无奖金审计通过的期，不核算金额',
+    withheldText: `暂停核算${payout.withheldIssueCount}期；正式ROI不提供。`,
+    limitations: summary.limitations,
+  };
+}
+type SummaryView = ReturnType<typeof presentSummary>;
+
 Page({
   requestVersion: 0,
+  summaryVersion: 0,
   disposed: false,
   data: {
+    summary: null as SummaryView | null,
+    summaryLoading: false,
+    summaryError: '',
     items: [] as ArchiveRow[],
     beforeId: null as number | null,
     hasMore: false,
@@ -37,14 +62,28 @@ Page({
     paginationNote: '',
   },
   onLoad() { void this.refresh(); },
-  onUnload() { this.disposed = true; this.requestVersion += 1; },
+  onUnload() { this.disposed = true; this.requestVersion += 1; this.summaryVersion += 1; },
   async onPullDownRefresh() {
     await this.refresh();
     if (!this.disposed) wx.stopPullDownRefresh();
   },
   onReachBottom() { void this.loadMore(); },
-  refresh() { return this.loadRecords(true); },
+  async refresh() { await Promise.all([this.loadSummary(), this.loadRecords(true)]); },
   loadMore() { return this.loadRecords(false); },
+  async loadSummary() {
+    if (this.disposed || this.data.summaryLoading) return;
+    const version = ++this.summaryVersion;
+    this.setData({ summaryLoading: true, summaryError: '' });
+    try {
+      const envelope = await api.getRecommendationSummary();
+      if (!this.disposed && version === this.summaryVersion) this.setData({ summary: presentSummary(envelope.data) });
+    } catch (error) {
+      // 失败保留上次汇总并提示，不以0或空样本替代。
+      if (!this.disposed && version === this.summaryVersion) this.setData({ summaryError: errorMessage(error) });
+    } finally {
+      if (!this.disposed && version === this.summaryVersion) this.setData({ summaryLoading: false });
+    }
+  },
   async loadRecords(refresh: boolean) {
     if (this.disposed || this.data.refreshing || (!refresh && (this.data.loadingMore || !this.data.hasMore))) return;
     const version = ++this.requestVersion;

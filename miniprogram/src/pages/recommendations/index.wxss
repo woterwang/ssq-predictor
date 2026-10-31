@@ -1,3 +1,3 @@
-/* 不在档案列表制造核验汇总；整卡作为明确的详情入口。 */
+/* 汇总由服务端按当前核验版本计算；逐条列表不推断状态，整卡作为明确的详情入口。 */
 .archive-entry { min-height: 180rpx; }
 .archive-entry:active { background: #f8faff; }

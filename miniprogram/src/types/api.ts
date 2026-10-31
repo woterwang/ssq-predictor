@@ -53,6 +53,25 @@ export interface VerificationView {
   latest: VerificationRecord | null;
   versions: VerificationRecord[];
 }
+/** 服务端只采用当前开奖指纹的核验；样本为0时平均值为null，不能显示为0。 */
+export interface RecommendationSummary {
+  definitionVersion: string;
+  recommendationCount: number;
+  issues: { verified: number; awaitingDraw: number; awaitingVerification: number };
+  tickets: {
+    verifiedTicketCount: number;
+    totalRedHits: number;
+    averageRedHits: number | null;
+    blueHitCount: number;
+    blueHitRate: number | null;
+    redHitDistribution: number[];
+    prizeCounts: Record<string, number>;
+  };
+  theoretical: { averageRedHits: number; blueHitRate: number };
+  payout: { accountedIssueCount: number; withheldIssueCount: number; accountedCostYuan: number;
+    announcedPrizeReplayYuan: number; formalRoi: null };
+  limitations: string[];
+}
 export interface Envelope<T> {
   data: T;
   pagination?: { nextBeforeIssue?: string | null; nextBeforeId?: number | null; limit: number };

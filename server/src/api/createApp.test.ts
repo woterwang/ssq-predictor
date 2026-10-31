@@ -194,6 +194,7 @@ describe('严格 query/path 输入', () => {
     '/api/recommendations?limit=101', '/api/recommendations?seed=123', '/api/recommendations/next?now=2020',
     '/api/recommendations/0', '/api/recommendations/1.5', '/api/recommendations/1e2',
     '/api/recommendations/9007199254740992/verification', '/api/recommendations/1/verification?verify=true',
+    '/api/recommendations/summary?verify=true',
     '/api/backtests?beforeId=2&beforeId=3', '/api/backtests?unlock=true', '/api/backtests?limit=1000000',
   ])('拒绝非法或多余参数：%s', async path => {
     const { app, database } = fixture();
@@ -387,7 +388,7 @@ describe('next 状态与完整推荐生命周期', () => {
     const generatedSnapshot = databaseSnapshot(database);
     for (const path of ['/health', '/api/draws', '/api/draws/latest', '/api/draws/2026124', '/api/statistics',
       '/api/features', '/api/recommendations', '/api/recommendations/next', '/api/recommendations/1',
-      '/api/recommendations/1/verification', '/api/backtests']) {
+      '/api/recommendations/1/verification', '/api/recommendations/summary', '/api/backtests']) {
       const response = await request(app).get(path).expect(200);
       expect(response.headers['cache-control']).toBe('no-store');
       expect(databaseSnapshot(database)).toEqual(generatedSnapshot);
@@ -448,6 +449,10 @@ describe('next 状态与完整推荐生命周期', () => {
     expect(listRecommendations(database)).toEqual([original]);
     expect(database.prepare('SELECT start_issue FROM backtest_holdout_policy').get()).toEqual({ start_issue: '2026125' });
     const finalSnapshot = databaseSnapshot(database);
+    const summary = await request(app).get('/api/recommendations/summary').expect(200);
+    expect(summary.body.data).toMatchObject({ recommendationCount: 1, issues: { verified: 1 },
+      tickets: { verifiedTicketCount: 5 }, payout: { accountedIssueCount: 1, accountedCostYuan: 10, formalRoi: null } });
+    expect(summary.body.disclaimers.length).toBeGreaterThan(0);
     await request(app).get('/api/recommendations/1').expect(200);
     await request(app).get('/api/recommendations/1/verification').expect(200);
     expect(databaseSnapshot(database)).toEqual(finalSnapshot);

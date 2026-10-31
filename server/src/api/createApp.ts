@@ -10,6 +10,7 @@ import { findPublicDraw, listPublicBacktests, listPublicDraws, listPublicRecomme
   publicRecommendation } from '../db/apiRepository';
 import { findRecommendationById } from '../db/recommendationRepository';
 import { generateNextRecommendation, getRecommendationVerification, verifyPendingRecommendations } from '../recommend/recommendationService';
+import { summarizeRecommendationPerformance } from '../recommend/recommendationSummary';
 import type { ApiDependencies } from './apiTypes';
 import { API_DISCLAIMERS } from './apiTypes';
 import { allowedQuery, analysisQuery, ApiError, assertEmptyBody,
@@ -118,6 +119,10 @@ export function createApiApp(dependencies: ApiDependencies): Express {
     const { limit, beforeId } = paginationQuery(request, 'beforeId');
     const data = listPublicRecommendations(dependencies.database, limit, beforeId);
     response.json({ data, pagination: { limit, beforeId, nextBeforeId: data.at(-1)?.id ?? null }, disclaimers: API_DISCLAIMERS });
+  });
+  app.get('/api/recommendations/summary', (request, response) => {
+    allowedQuery(request, []);
+    response.json({ data: summarizeRecommendationPerformance(dependencies.database), disclaimers: API_DISCLAIMERS });
   });
   app.get('/api/recommendations/:id/verification', (request, response) => {
     allowedQuery(request, []);

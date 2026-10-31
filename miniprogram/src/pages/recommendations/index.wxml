@@ -4,6 +4,25 @@
     <view>只读查看服务器已固化的推荐原件。列表不推断开奖或核验状态，进入详情后再取得核验结果。</view>
     <view class="muted space-top">每页20条，按排除式记录编号游标追加；没有生成、换号或策略切换操作。</view>
   </view>
+  <view class="card">
+    <view class="title">成绩汇总</view>
+    <view wx:if="{{summaryLoading && !summary}}" class="muted">正在读取汇总…</view>
+    <view wx:if="{{summaryError}}" class="notice warm">汇总读取失败：{{summaryError}}{{summary ? '；以下为上次取得的汇总。' : ''}}</view>
+    <block wx:if="{{summary}}">
+      <view>{{summary.statusText}}</view>
+      <view wx:if="{{!summary.hasSample}}" class="muted space-top">暂无已核验样本，不显示命中均值与奖级统计。</view>
+      <block wx:else>
+        <view class="space-top">{{summary.ticketText}}</view>
+        <view>{{summary.redText}}</view>
+        <view>{{summary.blueText}}</view>
+        <view class="muted">红球命中分布：{{summary.distributionText}}</view>
+        <view class="muted">奖级：{{summary.prizeText}}</view>
+        <view class="space-top">{{summary.payoutText}}</view>
+        <view class="muted">{{summary.withheldText}}</view>
+      </block>
+      <view wx:for="{{summary.limitations}}" wx:key="*this" class="muted space-top">· {{item}}</view>
+    </block>
+  </view>
   <request-state loading="{{refreshing || loadingMore}}" error="{{error}}" empty="{{loaded && items.length === 0}}" empty-text="服务器尚无固化推荐档案" last-updated="{{lastUpdated}}" bind:retry="refresh" />
   <view wx:if="{{items.length > 0 && (error || refreshing)}}" class="notice warm">{{refreshing ? '正在刷新' : '本次请求失败'}}，以下保留上次取得的列表，未确认最新档案状态。最近成功请求时间（设备记录）：{{lastUpdated}}。</view>
   <view wx:for="{{items}}" wx:key="id" class="card archive-entry" data-id="{{item.id}}" bindtap="openVerification" aria-role="button" aria-label="查看第{{item.targetIssue}}期推荐原件与核验">

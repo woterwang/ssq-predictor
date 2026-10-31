@@ -1,8 +1,8 @@
 import { getApiBaseUrl } from '../config/environment';
 import type { Envelope, PublicDraw, NextRecommendation, Recommendation, VerificationView,
-  AnalysisReport, AnalysisWindow, BacktestRun, Ticket, TicketCheckResult } from '../types/api';
+  AnalysisReport, AnalysisWindow, BacktestRun, Ticket, TicketCheckResult, RecommendationSummary } from '../types/api';
 import { validateDraw, validateNext, validateRecommendation, validateVerification,
-  validateAnalysis, validateBacktest, validateTicketCheck } from './validation';
+  validateAnalysis, validateBacktest, validateTicketCheck, validateRecommendationSummary } from './validation';
 
 export class PublicApiError extends Error {
   constructor(public readonly code: string, message: string, public readonly status = 0, public readonly retryAfterSeconds = 0) {
@@ -95,6 +95,9 @@ export const api = {
   },
   getVerification(id: number): Promise<Envelope<VerificationView>> {
     return request(`/api/recommendations/${positiveId(id)}/verification`, validateVerification);
+  },
+  getRecommendationSummary(): Promise<Envelope<RecommendationSummary>> {
+    return request('/api/recommendations/summary', validateRecommendationSummary);
   },
   getAnalysis(window: AnalysisWindow, refresh = false): Promise<Envelope<AnalysisReport>> {
     if (!isAnalysisWindow(window)) return Promise.reject(new PublicApiError('INVALID_INPUT', '统计窗口无效'));

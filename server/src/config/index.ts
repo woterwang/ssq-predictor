@@ -125,7 +125,7 @@ function loadAppConfig(): AppConfig {
 
   return {
     runtimeEnvironment,
-    apiHost: readStringSetting('API_HOST', '127.0.0.1'),
+    apiHost: readStringSetting('API_HOST', 'localhost'),
     apiPort,
     databaseFilePath: resolvePathFromServerRoot(readStringSetting('DATABASE_FILE_PATH', 'data/ssq.db')),
     rawResponseArchiveDir: resolvePathFromServerRoot(
