@@ -39,7 +39,7 @@ async function main() {
     navigateTo() {}, switchTab() {}, setClipboardData() {}, pageScrollTo() {},
     request(options) {
       const url = new URL(options.url);
-      const allowedPost = options.method === 'POST' && url.pathname === '/api/tickets/check' && url.search === '';
+      const allowedPost = options.method === 'POST' && ['/api/tickets/check', '/api/tickets/history-match'].includes(url.pathname) && url.search === '';
       check((options.method === 'GET' || allowedPost) && !options.header.Authorization && !url.pathname.startsWith('/api/admin'), '仅GET公众请求与无状态体检POST');
       requests.push(`${options.method} ${url.pathname}${url.search}`);
       // 仅验收桥接替换监听端口，不改小程序服务地址配置，也不影响正式/体验版本。
@@ -56,6 +56,12 @@ async function main() {
   const history = instantiatePage('history');
   await history.refresh(); await history.loadMore();
   check(history.data.draws.length > 20 && history.data.error === '', '真实历史游标追加');
+  const latest = history.data.draws[0];
+  const pad = number => String(number).padStart(2, '0');
+  history.onNumbersChange({ detail: { value: [...latest.redBalls, latest.blueBall].map(pad).join(' ') } });
+  await history.matchNumbers();
+  check(history.data.matchResult?.rows.some(row => row.issue === latest.issue && row.gradeText.startsWith('一等奖')) && history.data.matchError === '',
+    `真实最新开奖号码历史比对命中一等奖：${history.data.matchError}`);
   const detail = instantiatePage('draw-detail');
   detail.requestedIssue = home.data.latestDraw.issue; detail.data.routeValid = true;
   await detail.refresh();

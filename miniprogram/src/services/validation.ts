@@ -1,5 +1,6 @@
 import type { PublicDraw, Ticket, Recommendation, NextRecommendation, VerificationView, VerificationRecord,
-  AnalysisReport, DrawFeatures, HeatLabel, NumberStatistics, BacktestRun, TicketCheckResult, RecommendationSummary } from '../types/api';
+  AnalysisReport, DrawFeatures, HeatLabel, NumberStatistics, BacktestRun, TicketCheckResult, RecommendationSummary,
+  HistoryMatchResult } from '../types/api';
 
 /** 在网络边界检查展示所依赖的字段，拒绝缺字段/假零，不把TS断言当运行时验证。 */
 function object(value: unknown): Record<string, unknown> {
@@ -241,4 +242,28 @@ export function validateTicketCheck(value: unknown, submitted: Ticket): TicketCh
   ensure(theoretical.totalSingleTickets === 17721088 && theoretical.jackpotOdds === '1/17721088' && finite(theoretical.jackpotProbability));
   ensure(texts(record.disclaimers));
   return value as TicketCheckResult;
+}
+
+/** 匹配项必须六红与提交一致、奖级与蓝球一致、期号倒序唯一且不超出覆盖范围。 */
+export function validateHistoryMatch(value: unknown, submitted: Ticket): HistoryMatchResult {
+  const record = object(value);
+  const checked = ticket(record.ticket);
+  const reds = [...submitted.redBalls].sort((a, b) => a - b).join();
+  ensure(checked.blueBall === submitted.blueBall && checked.redBalls.join() === reds && texts(record.disclaimers));
+  const coverage = object(record.coverage);
+  ensure(integer(coverage.drawCount) && (coverage.drawCount === 0
+    ? coverage.firstIssue === null && coverage.lastIssue === null
+    : issue(coverage.firstIssue) && issue(coverage.lastIssue) && String(coverage.firstIssue) <= String(coverage.lastIssue)));
+  ensure(Array.isArray(record.matches) && record.matches.length <= Number(coverage.drawCount));
+  let previous = '';
+  for (const item of record.matches) {
+    const match = object(item);
+    const drawn = ticket(item);
+    ensure(issue(match.issue) && date(match.drawDate) && String(match.issue).slice(0, 4) === String(match.drawDate).slice(0, 4)
+      && (previous === '' || String(match.issue) < previous)
+      && String(match.issue) >= String(coverage.firstIssue) && String(match.issue) <= String(coverage.lastIssue)
+      && drawn.redBalls.join() === reds && match.grade === (drawn.blueBall === submitted.blueBall ? 1 : 2));
+    previous = String(match.issue);
+  }
+  return value as HistoryMatchResult;
 }

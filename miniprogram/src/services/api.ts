@@ -1,8 +1,8 @@
 import { getApiBaseUrl } from '../config/environment';
 import type { Envelope, PublicDraw, NextRecommendation, Recommendation, VerificationView,
-  AnalysisReport, AnalysisWindow, BacktestRun, Ticket, TicketCheckResult, RecommendationSummary } from '../types/api';
+  AnalysisReport, AnalysisWindow, BacktestRun, Ticket, TicketCheckResult, RecommendationSummary, HistoryMatchResult } from '../types/api';
 import { validateDraw, validateNext, validateRecommendation, validateVerification,
-  validateAnalysis, validateBacktest, validateTicketCheck, validateRecommendationSummary } from './validation';
+  validateAnalysis, validateBacktest, validateTicketCheck, validateRecommendationSummary, validateHistoryMatch } from './validation';
 
 export class PublicApiError extends Error {
   constructor(public readonly code: string, message: string, public readonly status = 0, public readonly retryAfterSeconds = 0) {
@@ -29,7 +29,7 @@ function request<T>(path: string, validate: (value: unknown) => T, body: Ticket 
     return Promise.reject(new PublicApiError('ENVIRONMENT', error instanceof Error ? error.message : '服务地址未配置'));
   }
   return new Promise((resolve, reject) => {
-    // 除无状态选号体检外均为GET；不设置Authorization、不接收自由URL、不给客户端管理入口。
+    // 除无状态选号体检/历史比对外均为GET；不设置Authorization、不接收自由URL、不给客户端管理入口。
     wx.request({
       url: `${baseUrl}${path}`, method: body ? 'POST' : 'GET', timeout: 15000,
       header: body ? { Accept: 'application/json', 'Content-Type': 'application/json' } : { Accept: 'application/json' },
@@ -123,5 +123,15 @@ export const api = {
     }
     const submitted = { redBalls: [...reds].sort((a, b) => a - b), blueBall: ticket.blueBall };
     return request('/api/tickets/check', value => validateTicketCheck(value, submitted), submitted);
+  },
+  /** 在全部已收录开奖中比对一、二等奖条件；号码放请求体，服务器不保存。 */
+  matchHistory(ticket: Ticket): Promise<Envelope<HistoryMatchResult>> {
+    const reds = ticket.redBalls;
+    if (reds.length !== 6 || new Set(reds).size !== 6 || reds.some(n => !Number.isInteger(n) || n < 1 || n > 33)
+      || !Number.isInteger(ticket.blueBall) || ticket.blueBall < 1 || ticket.blueBall > 16) {
+      return Promise.reject(new PublicApiError('INVALID_INPUT', '须为6个不重复红球（1–33）与1个蓝球（1–16）'));
+    }
+    const submitted = { redBalls: [...reds].sort((a, b) => a - b), blueBall: ticket.blueBall };
+    return request('/api/tickets/history-match', value => validateHistoryMatch(value, submitted), submitted);
   },
 };

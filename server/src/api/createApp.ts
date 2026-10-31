@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { getBasicAnalysis } from '../analysis/basicAnalysisService';
 import { calculateDrawFeatures } from '../analysis/drawFeatures';
-import { findPublicDraw, listPublicBacktests, listPublicDraws, listPublicRecommendations,
+import { findHistoryTopPrizeMatches, findPublicDraw, listPublicBacktests, listPublicDraws, listPublicRecommendations,
   publicRecommendation } from '../db/apiRepository';
 import { findRecommendationById } from '../db/recommendationRepository';
 import { generateNextRecommendation, getRecommendationVerification, verifyPendingRecommendations } from '../recommend/recommendationService';
@@ -149,6 +149,14 @@ export function createApiApp(dependencies: ApiDependencies): Express {
     response.json({ data: { ticket, features,
       theoretical: { jackpotProbability: 1 / 17_721_088, jackpotOdds: '1/17721088', totalSingleTickets: 17_721_088 },
       disclaimers: API_DISCLAIMERS } });
+  });
+  // 号码放在请求体而非查询串，避免进入代理访问日志；只读不保存。
+  app.post('/api/tickets/history-match', (request, response) => {
+    allowedQuery(request, []);
+    const ticket = parseTicket(request.body);
+    response.json({ data: { ticket, ...findHistoryTopPrizeMatches(dependencies.database, ticket),
+      disclaimers: ['仅比对已收录开奖的一、二等奖号码条件，不代表实际购买或兑奖',
+        '历史是否开出过不影响今后任何一期的中奖概率', ...API_DISCLAIMERS] } });
   });
 
   const emptyAdminRequest: RequestHandler = (request, _response, next) => {

@@ -174,3 +174,10 @@ export interface TicketCheckResult {
   theoretical: { jackpotProbability: number; jackpotOdds: string; totalSingleTickets: number };
   disclaimers: string[];
 }
+/** 六红全中的历史期：蓝球也中为一等奖，否则二等奖。 */
+export interface HistoryMatchResult {
+  ticket: Ticket;
+  coverage: { drawCount: number; firstIssue: string | null; lastIssue: string | null };
+  matches: Array<Ticket & { issue: string; drawDate: string; grade: 1 | 2 }>;
+  disclaimers: string[];
+}

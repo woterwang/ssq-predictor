@@ -149,6 +149,34 @@ async function main() {
   transport = options => options.success({ statusCode: 200, header: {}, data: { data: [{ ...draw, issue: '2026104' }], pagination: { nextBeforeIssue: '2026104', limit: 20 } } });
   await history.loadMore();
   check(history.data.draws.length === 21 && !history.data.hasMore, '追加重试成功且终止');
+  const input = value => history.onNumbersChange({ detail: { value } });
+  const beforeInvalid = requestCount;
+  for (const bad of ['01 02 03 04 05 06', '01 01 02 03 04 05 08', '01 02 03 04 05 34 08', '01 02 03 04 05 06 17', 'a b c d e f g']) {
+    input(bad); await history.matchNumbers();
+  }
+  check(requestCount === beforeInvalid && !!history.data.matchError && history.data.matchResult === null, '非法7码本地拒绝不请求');
+  const matchResult = { ticket: { redBalls: [1, 2, 3, 4, 5, 6], blueBall: 8 }, coverage: { drawCount: 3, firstIssue: '2013001', lastIssue: '2026124' },
+    matches: [{ issue: '2026124', drawDate: '2026-10-29', redBalls: [1, 2, 3, 4, 5, 6], blueBall: 8, grade: 1 },
+      { issue: '2013001', drawDate: '2013-01-01', redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7, grade: 2 }], disclaimers: ['桩1', '桩2', '桩3'] };
+  let captured;
+  transport = options => { captured = options; options.success({ statusCode: 200, header: {}, data: { data: matchResult } }); };
+  input('06，05、04+03 02 01 | 08'); await history.matchNumbers();
+  check(captured.method === 'POST' && captured.url.endsWith('/api/tickets/history-match') && !captured.url.includes('?')
+    && JSON.stringify(captured.data) === '{"redBalls":[1,2,3,4,5,6],"blueBall":8}', '7码排序后仅POST两字段');
+  check(history.data.matchResult.rows.length === 2 && history.data.matchResult.summaryText.includes('一等奖1期、二等奖1期')
+    && history.data.matchResult.coverageText.includes('共3期') && history.data.matchResult.disclaimers.length === 2, '一/二等奖结果映射');
+  input('01 02 03 04 05 06 09');
+  check(history.data.matchResult === null, '编辑号码即清除旧结果');
+  transport = options => options.success({ statusCode: 200, header: {}, data: { data: { ...matchResult, ticket: { redBalls: [1, 2, 3, 4, 5, 6], blueBall: 9 } } } });
+  await history.matchNumbers();
+  check(history.data.matchResult === null && !!history.data.matchError, '奖级与蓝球不一致拒绝');
+  transport = options => options.success({ statusCode: 200, header: {}, data: { data: { ...matchResult, ticket: { redBalls: [1, 2, 3, 4, 5, 6], blueBall: 9 }, matches: [] } } });
+  await history.matchNumbers();
+  check(history.data.matchResult.summaryText.includes('未开出过') && history.data.matchError === '', '无匹配明确说明范围');
+  const validation = require(path.join(output, 'services/validation.js'));
+  assert.throws(() => validation.validateHistoryMatch({ ...matchResult, matches: [...matchResult.matches].reverse() }, matchResult.ticket)); checks++;
+  assert.throws(() => validation.validateHistoryMatch({ ...matchResult, matches: [{ ...matchResult.matches[0], redBalls: [1, 2, 3, 4, 5, 7] }] }, matchResult.ticket)); checks++;
+  assert.throws(() => validation.validateHistoryMatch({ ...matchResult, coverage: { drawCount: 0, firstIssue: null, lastIssue: null } }, matchResult.ticket)); checks++;
 
   const pendingView = { recommendation, latest: null, versions: [] };
   transport = options => options.url.includes('/verification')

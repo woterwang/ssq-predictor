@@ -6,6 +6,24 @@
     <view class="action"><t-button theme="primary" variant="outline" loading="{{searching}}" disabled="{{searching}}" bindtap="findIssue">查询该期</t-button></view>
     <view wx:if="{{queryError}}" class="notice warm space-top">{{queryError}}</view>
   </view>
+  <view class="card">
+    <view class="subtitle">号码历史比对（一、二等奖）</view>
+    <view class="muted">在全部已收录开奖中查询该组号码是否六红全中：蓝球也中为一等奖，否则为二等奖。</view>
+    <view class="space-top"><t-input value="{{numbersInput}}" label="号码" placeholder="6红+1蓝，如 01 02 03 04 05 06 08" maxlength="40" bind:change="onNumbersChange" /></view>
+    <view class="action"><t-button theme="primary" variant="outline" loading="{{matching}}" disabled="{{matching}}" bindtap="matchNumbers">比对历史一、二等奖</t-button></view>
+    <view wx:if="{{matchError}}" class="notice warm space-top">{{matchError}}</view>
+    <block wx:if="{{matchResult}}">
+      <view class="space-top">查询号码：{{matchResult.ticketText}}</view>
+      <view class="muted">{{matchResult.coverageText}}</view>
+      <view wx:if="{{matchResult.summaryText}}" class="subtitle space-top">{{matchResult.summaryText}}</view>
+      <view wx:for="{{matchResult.rows}}" wx:key="issue" class="draw-entry space-top" data-issue="{{item.issue}}" bindtap="openDraw" aria-role="button" aria-label="查看第{{item.issue}}期开奖详情">
+        <view class="row"><view>第{{item.issue}}期 · {{item.gradeText}}</view><text class="muted">详情 ›</text></view>
+        <view class="muted">开奖日期（北京时间）：{{item.drawDate}}</view>
+        <ticket-row red-balls="{{item.redBalls}}" blue-ball="{{item.blueBall}}" label="当期开奖号码" />
+      </view>
+      <view wx:for="{{matchResult.disclaimers}}" wx:key="*this" class="muted space-top">· {{item}}</view>
+    </block>
+  </view>
   <request-state loading="{{refreshing || loadingMore}}" error="{{error}}" empty="{{loaded && draws.length === 0}}" empty-text="服务器尚无收录开奖" last-updated="{{lastUpdated}}" bind:retry="refresh" />
   <view wx:if="{{draws.length > 0 && (error || refreshing)}}" class="notice warm">{{refreshing ? '正在刷新' : '本次请求失败'}}，以下保留上次取得列表，不代表当前最新状态。最近成功请求时间（设备记录）：{{lastUpdated}}；重试追加不会跳过失败页。</view>
   <view wx:for="{{draws}}" wx:key="issue" class="card draw-entry" data-issue="{{item.issue}}" bindtap="openDraw" aria-role="button" aria-label="查看第{{item.issue}}期开奖详情">

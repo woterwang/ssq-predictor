@@ -224,6 +224,30 @@ describe('单注检查与 JSON 边界', () => {
     expect(databaseSnapshot(database)).toEqual(before);
   });
 
+  it('历史一/二等奖比对：六红全中按蓝球分级，覆盖范围同快照，无匹配返回空', async () => {
+    const { app, database } = fixture();
+    const before = databaseSnapshot(database);
+    const first = await request(app).post('/api/tickets/history-match').send({ redBalls: [6, 5, 4, 3, 2, 1], blueBall: 7 }).expect(200);
+    expect(first.body.data.ticket).toEqual({ redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7 });
+    expect(first.body.data.coverage).toEqual({ drawCount: 2, firstIssue: '2026123', lastIssue: '2026124' });
+    expect(first.body.data.matches).toEqual([
+      { issue: '2026124', drawDate: '2026-10-29', redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7, grade: 1 },
+      { issue: '2026123', drawDate: '2026-10-27', redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7, grade: 1 }]);
+    const second = await request(app).post('/api/tickets/history-match').send({ redBalls: [1, 2, 3, 4, 5, 6], blueBall: 8 }).expect(200);
+    expect(second.body.data.matches.map((match: { grade: number }) => match.grade)).toEqual([2, 2]);
+    const none = await request(app).post('/api/tickets/history-match').send({ redBalls: [1, 2, 3, 4, 5, 7], blueBall: 7 }).expect(200);
+    expect(none.body.data.matches).toEqual([]);
+    expect(JSON.stringify([first.body, second.body])).not.toContain(secretMarker);
+    expect(first.body.data.disclaimers.length).toBeGreaterThan(0);
+    await request(app).post('/api/tickets/history-match').send({ redBalls: [1, 2, 3, 4, 5], blueBall: 7 }).expect(400);
+    await request(app).post('/api/tickets/history-match?debug=1').send({ redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7 }).expect(400);
+    await request(app).get('/api/tickets/history-match').expect(404);
+    const empty = fixture({}, false);
+    const emptyResult = await request(empty.app).post('/api/tickets/history-match').send({ redBalls: [1, 2, 3, 4, 5, 6], blueBall: 7 }).expect(200);
+    expect(emptyResult.body.data).toMatchObject({ coverage: { drawCount: 0, firstIssue: null, lastIssue: null }, matches: [] });
+    expect(databaseSnapshot(database)).toEqual(before);
+  });
+
   it.each([
     {}, { redBalls: [1, 2, 3, 4, 5, 6] }, { redBalls: [1, 2, 3, 4, 5], blueBall: 7 },
     { redBalls: [1, 1, 2, 3, 4, 5], blueBall: 7 }, { redBalls: [0, 2, 3, 4, 5, 6], blueBall: 7 },

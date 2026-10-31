@@ -46,6 +46,21 @@ export function findPublicDraw(database: SqliteDatabase, issue: string): PublicD
   return row === undefined ? null : publicDraw(row);
 }
 
+/** 在全部已收录开奖中查六红全中的期：蓝球也中为一等奖，否则二等奖；同一读快照给出覆盖范围。 */
+export function findHistoryTopPrizeMatches(database: SqliteDatabase, ticket: { redBalls: readonly number[]; blueBall: number }) {
+  return database.transaction(() => {
+    const coverage = database.prepare(`SELECT COUNT(*) AS drawCount, MIN(issue) AS firstIssue, MAX(issue) AS lastIssue
+      FROM draws`).get() as { drawCount: number; firstIssue: string | null; lastIssue: string | null };
+    // 表约束保证红球升序入库，入参已排序，按列精确匹配。
+    const rows = database.prepare(`SELECT ${PUBLIC_DRAW_COLUMNS} FROM draws WHERE red_ball_1 = ? AND red_ball_2 = ?
+      AND red_ball_3 = ? AND red_ball_4 = ? AND red_ball_5 = ? AND red_ball_6 = ? ORDER BY issue DESC`)
+      .all(...ticket.redBalls) as PublicDrawRow[];
+    const matches = rows.map(publicDraw).map(draw => ({ issue: draw.issue, drawDate: draw.drawDate,
+      redBalls: draw.redBalls, blueBall: draw.blueBall, grade: draw.blueBall === ticket.blueBall ? 1 : 2 }));
+    return { coverage, matches };
+  })();
+}
+
 /** 读推荐同样校验固化哈希；种子、时间、参数和号码均为公开审计内容，不是管理密钥。 */
 export function publicRecommendation(record: RecommendationRecord): RecommendationRecord {
   assertRecommendationContentHash(record);
