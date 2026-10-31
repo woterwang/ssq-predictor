@@ -14,6 +14,7 @@
     "build": "tsc -p tsconfig.build.json",
     "db:init": "tsx scripts/initDatabase.ts",
     "import:full": "tsx scripts/importFullHistory.ts",
+    "import:early": "tsx scripts/importEarlyHistoryThirdParty.ts",
     "sync:latest": "tsx scripts/syncLatestDraws.ts",
     "scheduler": "tsx scripts/runScheduler.ts",
     "analyze:basic": "tsx scripts/analyzeBasicStatistics.ts",
