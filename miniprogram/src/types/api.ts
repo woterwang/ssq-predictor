@@ -31,6 +31,19 @@ export interface NextRecommendation {
   recommendation: Recommendation | null;
 }
 export type PrizeGrade = 1 | 2 | 3 | 4 | 5 | 6 | 'fortune' | 'none';
+/** 当前开奖指纹下的只读派生口径，不属于持久化核验，也不表示活动审计通过。 */
+export interface OrdinaryPrizeReplay {
+  definitionVersion: 'ordinary-prize-replay-v1';
+  verificationId: number;
+  drawFingerprint: string;
+  eligible: boolean;
+  hasUnverifiedActivity: boolean;
+  withheldReasons: string[];
+  warnings: string[];
+  costYuan: number;
+  announcedPrizeReplayYuan: number | null;
+  outcomes: Array<{ redHits: number; blueHit: boolean; grade: Exclude<PrizeGrade, 'fortune'>; prizeYuan: number | null }>;
+}
 export interface VerificationRecord {
   id: number;
   recommendationId: number;
@@ -52,6 +65,8 @@ export interface VerificationView {
   recommendation: Recommendation;
   latest: VerificationRecord | null;
   versions: VerificationRecord[];
+  /** 旧后端可缺省；缺失不代表0元，修正未核验时为null。 */
+  ordinaryReplay?: OrdinaryPrizeReplay | null;
 }
 /** 服务端只采用当前开奖指纹的核验；样本为0时平均值为null，不能显示为0。 */
 export interface RecommendationSummary {
@@ -70,6 +85,14 @@ export interface RecommendationSummary {
   theoretical: { averageRedHits: number; blueHitRate: number };
   payout: { accountedIssueCount: number; withheldIssueCount: number; accountedCostYuan: number;
     announcedPrizeReplayYuan: number; formalRoi: null };
+  ordinaryReplay?: {
+    definitionVersion: 'ordinary-prize-replay-v1';
+    accountedIssueCount: number; withheldIssueCount: number;
+    accountedCostYuan: number; announcedPrizeReplayYuan: number;
+    activityWarningIssueCount: number;
+    withheldIssues: Array<{ issue: string; reasons: string[] }>;
+    limitations: string[];
+  };
   limitations: string[];
 }
 export interface Envelope<T> {

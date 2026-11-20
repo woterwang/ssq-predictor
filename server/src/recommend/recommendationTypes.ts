@@ -1,5 +1,6 @@
 /** 推荐固化边界：旧行的新增元数据为 null，不把旧记录冒充可审计推荐。 */
 import type { DrawPayoutPolicy, LotteryTicket, PrizeGrade } from '../backtest/backtestTypes';
+import type { OrdinaryPrizeReplay } from './ordinaryPrizeReplay';
 
 export interface RecommendationContent {
   targetIssue: string;
@@ -67,4 +68,6 @@ export interface RecommendationVerificationView {
   latest: RecommendationVerificationRecord | null;
   /** 最新追加版本在前。 */
   versions: RecommendationVerificationRecord[];
+  /** 独立、只读派生的常规金额口径，不追加或改写旧核验，不表示严格审计通过。 */
+  ordinaryReplay: (OrdinaryPrizeReplay & { verificationId: number; drawFingerprint: string }) | null;
 }

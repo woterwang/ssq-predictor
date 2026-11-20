@@ -437,6 +437,7 @@ describe('next 状态与完整推荐生命周期', () => {
     const beforeVerify = databaseSnapshot(database);
     const notVerifiedByGet = await request(app).get('/api/recommendations/1/verification').expect(200);
     expect(notVerifiedByGet.body.data.versions).toEqual([]);
+    expect(notVerifiedByGet.body.data.ordinaryReplay).toBeNull();
     const newNext = await request(app).get('/api/recommendations/next').expect(200);
     expect(newNext.body.data).toMatchObject({ status: 'awaiting_draw', reason: 'source_draw_not_finished',
       nextDraw: { issue: '2026126' }, recommendation: null });
@@ -476,10 +477,30 @@ describe('next 状态与完整推荐生命周期', () => {
     const summary = await request(app).get('/api/recommendations/summary').expect(200);
     expect(summary.body.data).toMatchObject({ recommendationCount: 1, issues: { verified: 1 },
       tickets: { verifiedTicketCount: 5 }, payout: { accountedIssueCount: 1, accountedCostYuan: 10, formalRoi: null } });
+    expect(summary.body.data.ordinaryReplay).toMatchObject({ definitionVersion: 'ordinary-prize-replay-v1',
+      accountedIssueCount: 1, withheldIssueCount: 0, accountedCostYuan: 10, activityWarningIssueCount: 0 });
     expect(summary.body.disclaimers.length).toBeGreaterThan(0);
     await request(app).get('/api/recommendations/1').expect(200);
     await request(app).get('/api/recommendations/1/verification').expect(200);
     expect(databaseSnapshot(database)).toEqual(finalSnapshot);
+    // 已有核验仍保留原JSON；新增只读口径在派奖期也不让严格审计被误标为通过。
+    updateDrawPrizeDetail(database, { ...completedTarget,
+      rawRecordJson: JSON.stringify({ code: original.targetIssue, addmoney2: '20000000' }) }, now.toISOString());
+    expect((await request(app).get('/api/recommendations/1/verification').expect(200)).body.data.ordinaryReplay).toBeNull();
+    await authorizedPost(app, '/api/admin/recommendations/verify').expect(200);
+    const activitySnapshot = databaseSnapshot(database);
+    const activityView = (await request(app).get('/api/recommendations/1/verification').expect(200)).body.data;
+    expect(activityView.latest.result.payoutAudit.eligible).toBe(false);
+    expect(activityView.latest.result).not.toHaveProperty('ordinaryReplay');
+    expect(activityView.ordinaryReplay).toMatchObject({ eligible: true, hasUnverifiedActivity: true,
+      verificationId: activityView.latest.id, drawFingerprint: activityView.latest.drawFingerprint,
+      announcedPrizeReplayYuan: finalRead.body.data.ordinaryReplay.announcedPrizeReplayYuan });
+    expect(activityView).not.toHaveProperty('rawRecordJson');
+    const activitySummary = (await request(app).get('/api/recommendations/summary').expect(200)).body.data;
+    expect(activitySummary.payout).toMatchObject({ accountedIssueCount: 0, withheldIssueCount: 1, formalRoi: null });
+    expect(activitySummary.ordinaryReplay).toMatchObject({ accountedIssueCount: 1, withheldIssueCount: 0,
+      activityWarningIssueCount: 1, announcedPrizeReplayYuan: activityView.ordinaryReplay.announcedPrizeReplayYuan });
+    expect(databaseSnapshot(database)).toEqual(activitySnapshot);
   });
 
   it('推荐 beforeId 严格排除，倒序与默认分页', async () => {

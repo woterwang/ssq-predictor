@@ -8,6 +8,8 @@ interface FrozenTicketRow extends Ticket {
   outcomeText: string;
   gradeText: string;
   amountText: string;
+  ordinaryAmountText: string;
+  ordinaryGradeText: string;
 }
 interface VersionRow { id: number; verifiedAtText: string; fingerprint: string; targetIssue: string }
 interface WarningRow { key: string; text: string }
@@ -26,6 +28,8 @@ function presentTickets(view: VerificationView, showOutcomes: boolean): FrozenTi
   const latest = view.latest;
   return view.recommendation.tickets.map((ticket, ticketIndex) => {
     const outcome = showOutcomes && latest ? latest.result.outcomes[ticketIndex] : null;
+    const ordinary = showOutcomes ? view.ordinaryReplay : null;
+    const ordinaryOutcome = ordinary?.outcomes[ticketIndex];
     return {
       ...ticket,
       ticketKey: `${ticketIndex}-${ticket.redBalls.join('-')}-${ticket.blueBall}`,
@@ -34,6 +38,8 @@ function presentTickets(view: VerificationView, showOutcomes: boolean): FrozenTi
       gradeText: outcome ? prizeGradeText(outcome.grade) : '',
       amountText: outcome && latest?.result.payoutAudit.eligible
         ? formatAmount(outcome.prizeYuan) : '暂停金额展示',
+      ordinaryAmountText: ordinary?.eligible && ordinaryOutcome ? formatAmount(ordinaryOutcome.prizeYuan) : '暂不提供',
+      ordinaryGradeText: ordinaryOutcome ? ordinaryOutcome.grade === 'none' ? '常规一至六等奖未中' : prizeGradeText(ordinaryOutcome.grade) : '',
     };
   });
 }
@@ -66,6 +72,11 @@ Page({
     showOutcomes: false,
     replayAvailable: false,
     replayAmountText: '',
+    ordinaryReplayProvided: false,
+    ordinaryReplayAvailable: false,
+    ordinaryReplayAmountText: '',
+    ordinaryWarnings: [] as string[],
+    ordinaryWithheldReasons: [] as string[],
     formalRoiText: '暂不提供',
   },
   onLoad(options: Record<string, string | undefined>) {
@@ -153,6 +164,9 @@ Page({
       }
       const replayAvailable = showOutcomes && latest !== null && latest.result.payoutAudit.eligible
         && latest.result.announcedPrizeReplayYuan !== null && Number.isFinite(latest.result.announcedPrizeReplayYuan);
+      // 独立口径只在当前核验与目标开奖均取得时展示；不覆盖原始严格核验。
+      const ordinary = showOutcomes ? view.ordinaryReplay : null;
+      const ordinaryReplayAvailable = !!ordinary?.eligible && ordinary.announcedPrizeReplayYuan !== null;
       this.setData({
         view, targetDraw, drawError, drawPending, drawUpdatedAt, verificationUpdatedAt,
         frozenTickets: presentTickets(view, showOutcomes),
@@ -169,6 +183,11 @@ Page({
         latestVerifiedAtText: latestValid && latest ? formatBeijingTime(latest.verifiedAt) : '',
         latestFingerprint: latestValid && latest ? latest.drawFingerprint : '',
         replayAmountText: replayAvailable && latest ? formatAmount(latest.result.announcedPrizeReplayYuan) : '',
+        ordinaryReplayProvided: !!ordinary,
+        ordinaryReplayAvailable,
+        ordinaryReplayAmountText: ordinaryReplayAvailable && ordinary ? formatAmount(ordinary.announcedPrizeReplayYuan) : '',
+        ordinaryWarnings: ordinary?.warnings ?? [],
+        ordinaryWithheldReasons: ordinary?.withheldReasons ?? [],
         notFound: false,
         formalRoiText: '暂不提供',
       });
@@ -178,6 +197,8 @@ Page({
         this.setData({
           view: null, targetDraw: null, frozenTickets: [], versions: [], auditWarnings: [],
           notFound: true, drawError: '', drawPending: false, showOutcomes: false, replayAvailable: false,
+          ordinaryReplayProvided: false, ordinaryReplayAvailable: false, ordinaryReplayAmountText: '',
+          ordinaryWarnings: [], ordinaryWithheldReasons: [],
           verificationUpdatedAt: formatBeijingTime(new Date().toISOString()),
         });
       } else {
@@ -188,6 +209,8 @@ Page({
           statusMessage: '以下原件和审计历史来自上次成功响应，不作当前命中或收益判断。请手动重试。',
           showOutcomes: false,
           replayAvailable: false,
+          ordinaryReplayProvided: false, ordinaryReplayAvailable: false, ordinaryReplayAmountText: '',
+          ordinaryWarnings: [], ordinaryWithheldReasons: [],
         });
       }
     } finally {

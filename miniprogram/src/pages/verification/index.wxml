@@ -11,7 +11,8 @@
         <ticket-row red-balls="{{item.redBalls}}" blue-ball="{{item.blueBall}}" index="{{item.ticketIndex}}" />
         <block wx:if="{{showOutcomes}}">
           <view class="outcome-text">{{item.outcomeText}} · {{item.gradeText}}</view>
-          <view class="muted">单注税前公告金额回放：{{item.amountText}}（非实际兑奖）</view>
+          <view class="muted">严格审计单注金额：{{item.amountText}}（非实际兑奖）</view>
+          <view wx:if="{{ordinaryReplayProvided}}" class="muted">独立常规回放：{{item.ordinaryGradeText}} · {{item.ordinaryAmountText}}（不含特别活动）</view>
         </block>
         <view wx:else class="muted">固化原件保留；当前不展示命中、奖级或收益判断。</view>
       </view>
@@ -39,6 +40,14 @@
     </view>
     <view class="card">
       <view class="title">收益口径与审计提醒</view>
+      <view class="subtitle">仅常规奖级公告金额回放</view>
+      <view wx:if="{{ordinaryReplayAvailable}}" class="space-top">常规税前公告金额：{{ordinaryReplayAmountText}}（非实际兑奖）</view>
+      <view wx:else class="notice warm space-top">常规回放暂不提供：可能是当前核验未确认、常规金额审计未通过，或服务端尚未提供此口径（需升级后端）；不按0元处理。</view>
+      <view class="muted space-top">仅一至六等奖；不计额外加奖、派奖与福运奖，不代表活动资格已核实。与严格口径不可相加。</view>
+      <view wx:for="{{ordinaryWithheldReasons}}" wx:key="*this" class="notice warm space-top">{{item}}</view>
+      <view wx:for="{{ordinaryWarnings}}" wx:key="*this" class="audit-warning">{{item}}</view>
+      <view class="divider" />
+      <view class="subtitle">严格审计口径（保留原结果）</view>
       <view class="metrics"><metric-card label="正式ROI" value="{{formalRoiText}}" /></view>
       <block wx:if="{{replayAvailable}}">
         <view class="subtitle">税前公告金额回放：{{replayAmountText}}</view>

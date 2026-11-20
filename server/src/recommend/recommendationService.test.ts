@@ -77,7 +77,7 @@ describe('M0开奖前固化', () => {
     expect(record.contentHash).toBe(computeRecommendationContentHash(record));
     expect(() => assertRecommendationContentHash(record)).not.toThrow();
     expect(listRecommendations(database)).toEqual([record]);
-    expect(getRecommendationVerification(database, record.id)).toEqual({ recommendation: record, latest: null, versions: [] });
+    expect(getRecommendationVerification(database, record.id)).toEqual({ recommendation: record, latest: null, versions: [], ordinaryReplay: null });
   });
 
   it('默认crypto种子是UInt32且入库可复现', () => {
@@ -338,6 +338,43 @@ describe('开奖后追加核验', () => {
 });
 
 describe('推荐成绩汇总', () => {
+  it('旧核验派生常规回放但不放宽严格审计，读取不改写任何表', () => {
+    const database = memoryDatabase();
+    const record = generate(database);
+    const draw = { ...matchingDraw(record, true), rawRecordJson: JSON.stringify({ code: record.targetIssue, addmoney2: '20000000' }) };
+    insertDraw(database, draw, afterTargetDraw.toISOString());
+    expect(getRecommendationVerification(database, record.id)?.ordinaryReplay).toBeNull();
+    verifyPendingRecommendations(database, afterTargetDraw);
+    const snapshot = () => canonicalJson(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
+      .all().map(row => { const name = (row as { name: string }).name; return { name, rows: database.prepare(`SELECT * FROM "${name}"`).all() }; }));
+    const before = snapshot();
+    const view = getRecommendationVerification(database, record.id)!;
+    expect(view.latest?.result.payoutAudit.eligible).toBe(false);
+    expect(view.latest?.result.announcedPrizeReplayYuan).toBeNull();
+    expect(view.latest?.result).not.toHaveProperty('ordinaryReplay');
+    expect(view.ordinaryReplay).toMatchObject({ eligible: true, hasUnverifiedActivity: true,
+      costYuan: 10, verificationId: view.latest?.id, drawFingerprint: view.latest?.drawFingerprint });
+    const summary = summarizeRecommendationPerformance(database);
+    expect(summary.payout).toMatchObject({ accountedIssueCount: 0, withheldIssueCount: 1, formalRoi: null });
+    expect(summary.ordinaryReplay).toMatchObject({ accountedIssueCount: 1, withheldIssueCount: 0,
+      activityWarningIssueCount: 1, accountedCostYuan: 10,
+      announcedPrizeReplayYuan: view.ordinaryReplay?.announcedPrizeReplayYuan });
+    expect(snapshot()).toBe(before);
+    expect(verifyPendingRecommendations(database, afterTargetDraw).unchangedCount).toBe(1);
+    expect(listRecommendationVerifications(database, record.id)).toHaveLength(1);
+    const changed = { ...draw, rawRecordJson: JSON.stringify({ code: record.targetIssue, annotation: '含派奖' }) };
+    updateDrawPrizeDetail(database, changed, afterTargetDraw.toISOString());
+    expect(getRecommendationVerification(database, record.id)?.ordinaryReplay).toBeNull();
+    expect(summarizeRecommendationPerformance(database).ordinaryReplay.accountedIssueCount).toBe(0);
+    verifyPendingRecommendations(database, afterTargetDraw);
+    expect(summarizeRecommendationPerformance(database).ordinaryReplay).toMatchObject({ accountedIssueCount: 0,
+      withheldIssueCount: 1, withheldIssues: [{ issue: record.targetIssue, reasons: [expect.stringContaining('含加奖/含派奖')] }] });
+    updateDrawPrizeDetail(database, draw, afterTargetDraw.toISOString());
+    expect(summarizeRecommendationPerformance(database)).toEqual(summary);
+    expect(listRecommendations(database)).toEqual([record]);
+    expect(listRecommendationVerifications(database, record.id)).toHaveLength(2);
+  });
+
   it('空库与待开奖不造0均值', () => {
     const empty = summarizeRecommendationPerformance(memoryDatabase());
     expect(empty).toMatchObject({ recommendationCount: 0, issues: { verified: 0, awaitingDraw: 0, awaitingVerification: 0 },

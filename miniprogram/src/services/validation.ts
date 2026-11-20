@@ -107,6 +107,30 @@ export function validateVerification(value: unknown): VerificationView {
     const latest = verificationRecord(record.latest, recommendation);
     ensure(record.versions.some(item => object(item).id === latest.id && object(item).drawFingerprint === latest.drawFingerprint));
   }
+  if (record.ordinaryReplay !== undefined && record.ordinaryReplay !== null) {
+    const ordinary = object(record.ordinaryReplay);
+    ensure(record.latest !== null);
+    const latest = verificationRecord(record.latest, recommendation);
+    ensure(ordinary.definitionVersion === 'ordinary-prize-replay-v1'
+      && ordinary.verificationId === latest.id && ordinary.drawFingerprint === latest.drawFingerprint
+      && typeof ordinary.eligible === 'boolean' && typeof ordinary.hasUnverifiedActivity === 'boolean'
+      && texts(ordinary.warnings) && texts(ordinary.withheldReasons)
+      && ordinary.eligible === ((ordinary.withheldReasons as string[]).length === 0)
+      && ordinary.costYuan === recommendation.tickets.length * 2
+      && Array.isArray(ordinary.outcomes) && ordinary.outcomes.length === recommendation.tickets.length);
+    let total = 0;
+    ordinary.outcomes.forEach((value, index) => {
+      const outcome = object(value), verified = latest.result.outcomes[index];
+      ensure(outcome.redHits === verified.redHits && outcome.blueHit === verified.blueHit
+        && outcome.grade === (verified.grade === 'fortune' ? 'none' : verified.grade));
+      if (ordinary.eligible) {
+        ensure(integer(outcome.prizeYuan) && (outcome.grade === 'none' ? outcome.prizeYuan === 0 : outcome.prizeYuan > 0));
+        total += outcome.prizeYuan;
+      } else ensure(outcome.prizeYuan === null);
+    });
+    ensure(ordinary.eligible ? integer(ordinary.announcedPrizeReplayYuan) && ordinary.announcedPrizeReplayYuan === total
+      : ordinary.announcedPrizeReplayYuan === null);
+  }
   // 当前latest由服务器按当前指纹匹配；禁止以versions[0]替代。
   return value as VerificationView;
 }
@@ -134,6 +158,27 @@ export function validateRecommendationSummary(value: unknown): RecommendationSum
     && payout.accountedIssueCount + payout.withheldIssueCount === issues.verified
     && nullableMoney(payout.accountedCostYuan) && payout.accountedCostYuan !== null
     && nullableMoney(payout.announcedPrizeReplayYuan) && payout.announcedPrizeReplayYuan !== null && payout.formalRoi === null);
+  // 新增口径独立校验；旧后端缺字段时兼容，但不能把缺失当作零金额。
+  if (record.ordinaryReplay !== undefined) {
+    const ordinary = object(record.ordinaryReplay);
+    ensure(ordinary.definitionVersion === 'ordinary-prize-replay-v1'
+      && integer(ordinary.accountedIssueCount) && integer(ordinary.withheldIssueCount)
+      && ordinary.accountedIssueCount + ordinary.withheldIssueCount === issues.verified
+      && integer(ordinary.accountedCostYuan) && ordinary.accountedCostYuan % 2 === 0
+      && integer(ordinary.announcedPrizeReplayYuan)
+      && integer(ordinary.activityWarningIssueCount, 0, Number(issues.verified))
+      && texts(ordinary.limitations) && Array.isArray(ordinary.withheldIssues)
+      && ordinary.withheldIssues.length === ordinary.withheldIssueCount);
+    if (ordinary.accountedIssueCount === 0) ensure(ordinary.accountedCostYuan === 0 && ordinary.announcedPrizeReplayYuan === 0);
+    else ensure(ordinary.accountedCostYuan >= ordinary.accountedIssueCount * 2);
+    const seenIssues = new Set<string>();
+    for (const item of ordinary.withheldIssues) {
+      const withheld = object(item);
+      ensure(issue(withheld.issue) && texts(withheld.reasons) && (withheld.reasons as string[]).length > 0
+        && !seenIssues.has(String(withheld.issue)));
+      seenIssues.add(String(withheld.issue));
+    }
+  }
   return value as RecommendationSummary;
 }
 

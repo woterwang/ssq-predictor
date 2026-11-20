@@ -25,7 +25,7 @@ function presentArchive(record: Recommendation): ArchiveRow {
 
 const GRADES: PrizeGrade[] = [1, 2, 3, 4, 5, 6, 'fortune', 'none'];
 function presentSummary(summary: RecommendationSummary) {
-  const { issues, tickets, theoretical, payout } = summary;
+  const { issues, tickets, theoretical, payout, ordinaryReplay } = summary;
   return {
     statusText: `共${summary.recommendationCount}期档案：已核验${issues.verified}期 · 待开奖${issues.awaitingDraw}期 · 已开奖待核验${issues.awaitingVerification}期`,
     hasSample: tickets.verifiedTicketCount > 0,
@@ -35,9 +35,18 @@ function presentSummary(summary: RecommendationSummary) {
     distributionText: tickets.redHitDistribution.map((count, hits) => `${hits}红×${count}`).join(' · '),
     prizeText: GRADES.map(grade => `${prizeGradeText(grade)} ${tickets.prizeCounts[String(grade)]}`).join(' · '),
     payoutText: payout.accountedIssueCount > 0
-      ? `奖金审计通过${payout.accountedIssueCount}期：成本 ${formatAmount(payout.accountedCostYuan)}，公告税前奖金回放 ${formatAmount(payout.announcedPrizeReplayYuan)}`
-      : '暂无奖金审计通过的期，不核算金额',
-    withheldText: `暂停核算${payout.withheldIssueCount}期；正式ROI不提供。`,
+      ? `严格审计通过${payout.accountedIssueCount}期：成本 ${formatAmount(payout.accountedCostYuan)}，公告税前奖金回放 ${formatAmount(payout.announcedPrizeReplayYuan)}`
+      : '暂无严格审计通过的期，严格口径不核算金额',
+    withheldText: `严格口径暂停${payout.withheldIssueCount}期，不等于未中奖，也不阻止下述独立常规回放；正式ROI不提供。`,
+    ordinaryPayoutText: ordinaryReplay
+      ? ordinaryReplay.accountedIssueCount > 0
+        ? `纳入${ordinaryReplay.accountedIssueCount}期：成本 ${formatAmount(ordinaryReplay.accountedCostYuan)}，常规税前公告金额 ${formatAmount(ordinaryReplay.announcedPrizeReplayYuan)}`
+        : '暂无可作常规公告金额回放的期，不以缺失金额代替0元。'
+      : '服务端尚未提供常规回放，请升级后端；未将缺失数据按0元展示。',
+    ordinaryNote: ordinaryReplay
+      ? `常规口径暂停${ordinaryReplay.withheldIssueCount}期；${ordinaryReplay.activityWarningIssueCount}期有特别奖/派奖提示，相关活动金额不计入。两种口径不可相加。` : '',
+    ordinaryLimitations: ordinaryReplay?.limitations ?? [],
+    ordinaryWithheldRows: ordinaryReplay?.withheldIssues.map(item => `第${item.issue}期：${item.reasons.join('；')}`) ?? [],
     limitations: summary.limitations,
   };
 }

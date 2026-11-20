@@ -17,8 +17,14 @@
         <view>{{summary.blueText}}</view>
         <view class="muted">红球命中分布：{{summary.distributionText}}</view>
         <view class="muted">奖级：{{summary.prizeText}}</view>
-        <view class="space-top">{{summary.payoutText}}</view>
+        <view class="subtitle space-top">严格审计口径（保留原结果）</view>
+        <view>{{summary.payoutText}}</view>
         <view class="muted">{{summary.withheldText}}</view>
+        <view class="subtitle space-top">仅常规奖级公告金额回放</view>
+        <view>{{summary.ordinaryPayoutText}}</view>
+        <view wx:if="{{summary.ordinaryNote}}" class="notice warm space-top">{{summary.ordinaryNote}}</view>
+        <view wx:for="{{summary.ordinaryLimitations}}" wx:key="*this" class="muted space-top">· {{item}}</view>
+        <view wx:for="{{summary.ordinaryWithheldRows}}" wx:key="*this" class="notice warm space-top">{{item}}</view>
       </block>
       <view wx:for="{{summary.limitations}}" wx:key="*this" class="muted space-top">· {{item}}</view>
     </block>

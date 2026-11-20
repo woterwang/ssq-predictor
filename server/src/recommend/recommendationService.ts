@@ -18,6 +18,7 @@ import { assertRecommendationContentHash, canonicalJson, computeDrawFingerprint,
   computeRecommendationContentHash } from './recommendationHash';
 import type { RecommendationContent, RecommendationOptions, RecommendationRecord,
   RecommendationVerificationResult, RecommendationVerificationView, VerifyPendingRecommendationsResult } from './recommendationTypes';
+import { buildOrdinaryPrizeReplay } from './ordinaryPrizeReplay';
 
 export const DEFAULT_RECOMMENDATION_TICKETS = 5;
 /** 防止单次请求耗尽资源，不是算法筛选或参数搜索。 */
@@ -225,12 +226,21 @@ export function verifyPendingRecommendations(database: SqliteDatabase, now: Date
 
 export function getRecommendationVerification(database: SqliteDatabase, id: number): RecommendationVerificationView | null {
   if (!Number.isSafeInteger(id) || id < 1) throw new Error('推荐id必须为安全正整数');
-  const recommendation = findRecommendationById(database, id);
-  if (recommendation === null) return null;
-  assertRecommendationContentHash(recommendation);
-  const versions = listRecommendationVerifications(database, id);
-  const draw = findDrawByIssue(database, recommendation.targetIssue);
-  const fingerprint = draw === null ? null : computeDrawFingerprint(draw);
-  // A→B→A修正无需复制A核验，但当前结果必须匹配A，而不是最后插入的B。
-  return { recommendation, latest: versions.find(version => version.drawFingerprint === fingerprint) ?? null, versions };
+  // 原件、当前开奖、旧核验与新口径共享同一只读快照；汇总外层事务内调用时只建savepoint。
+  return database.transaction(() => {
+    const recommendation = findRecommendationById(database, id);
+    if (recommendation === null) return null;
+    assertRecommendationContentHash(recommendation);
+    const versions = listRecommendationVerifications(database, id);
+    const draw = findDrawByIssue(database, recommendation.targetIssue);
+    const fingerprint = draw === null ? null : computeDrawFingerprint(draw);
+    // A→B→A修正无需复制A核验，但当前结果必须匹配A，而不是最后插入的B。
+    const latest = versions.find(version => version.drawFingerprint === fingerprint) ?? null;
+    // 旧核验仍按原定义保留。仅当前开奖已有匹配核验时派生新口径，GET不执行核验或写库。
+    const ordinaryReplay = latest !== null && draw !== null ? {
+      ...buildOrdinaryPrizeReplay(draw, recommendation.tickets),
+      verificationId: latest.id, drawFingerprint: latest.drawFingerprint,
+    } : null;
+    return { recommendation, latest, versions, ordinaryReplay };
+  })();
 }
