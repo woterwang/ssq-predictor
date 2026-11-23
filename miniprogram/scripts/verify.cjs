@@ -221,16 +221,16 @@ async function verifySummary(validation, setTransport, recommendation) {
     tickets: { verifiedTicketCount: 0, totalRedHits: 0, averageRedHits: null, blueHitCount: 0, blueHitRate: null,
       redHitDistribution: [0, 0, 0, 0, 0, 0, 0], prizeCounts },
     theoretical: { averageRedHits: 36 / 33, blueHitRate: 1 / 16 },
-    payout: { accountedIssueCount: 0, withheldIssueCount: 0, accountedCostYuan: 0, announcedPrizeReplayYuan: 0, formalRoi: null }, limitations: ['桩'] };
+    payout: { accountedIssueCount: 0, unpricedTicketCount: 0, accountedCostYuan: 0, announcedPrizeReplayYuan: 0, formalRoi: null }, limitations: ['桩'] };
   const verified = { ...empty, issues: { verified: 1, awaitingDraw: 0, awaitingVerification: 0 },
     tickets: { ...empty.tickets, verifiedTicketCount: 5, totalRedHits: 6, averageRedHits: 6 / 5, blueHitCount: 1, blueHitRate: 1 / 5,
       redHitDistribution: [1, 3, 0, 1, 0, 0, 0], prizeCounts: { ...prizeCounts, 6: 1, none: 4 } },
-    payout: { ...empty.payout, withheldIssueCount: 1 } };
+    payout: { ...empty.payout, accountedIssueCount: 1, accountedCostYuan: 10, announcedPrizeReplayYuan: 5 } };
   validation.validateRecommendationSummary(empty); validation.validateRecommendationSummary(verified); checks += 2;
   for (const bad of [{ ...empty, tickets: { ...empty.tickets, averageRedHits: 0 } },
     { ...empty, recommendationCount: 2 }, { ...verified, tickets: { ...verified.tickets, averageRedHits: 1.09 } },
     { ...verified, tickets: { ...verified.tickets, redHitDistribution: [0, 4, 0, 1, 0, 0, 0] } },
-    { ...verified, payout: { ...verified.payout, withheldIssueCount: 0 } }, { ...verified, payout: { ...verified.payout, formalRoi: 0 } }]) {
+    { ...verified, payout: { ...verified.payout, accountedIssueCount: 0 } }, { ...verified, payout: { ...verified.payout, formalRoi: 0 } }]) {
     assert.throws(() => validation.validateRecommendationSummary(bad)); checks++;
   }
   let summary = empty;
@@ -242,7 +242,8 @@ async function verifySummary(validation, setTransport, recommendation) {
   summary = verified;
   await archives.refresh();
   check(archives.data.summary.hasSample && archives.data.summary.redText.includes('1.200') && archives.data.summary.redText.includes('1.091')
-    && archives.data.summary.payoutText.includes('不核算') && archives.data.summary.prizeText.includes('六等奖 1'), '已核验汇总映射');
+    && archives.data.summary.payoutText.includes('已核算1期') && archives.data.summary.unpricedText === ''
+    && archives.data.summary.prizeText.includes('六等奖 1'), '已核验汇总映射');
   setTransport(options => options.url.includes('/summary') ? options.fail({ errMsg: 'offline' })
     : options.success({ statusCode: 200, header: {}, data: { data: [recommendation], pagination: { nextBeforeId: 1, limit: 20 } } }));
   await archives.refresh();

@@ -348,7 +348,7 @@ describe('推荐成绩汇总', () => {
       issues: { verified: 0, awaitingDraw: 1, awaitingVerification: 0 }, tickets: { averageRedHits: null } });
   });
 
-  it('A→B→A修正只用当前指纹核验；奖金审计未通过整期暂停核算', () => {
+  it('A→B→A修正只用当前指纹核验；所有已核验期均核算成本与奖金', () => {
     const database = memoryDatabase();
     const record = generate(database);
     const drawA = matchingDraw(record);
@@ -364,13 +364,14 @@ describe('推荐成绩汇总', () => {
     expect(withheld.tickets.redHitDistribution.reduce((sum, count) => sum + count, 0)).toBe(5);
     expect(withheld.tickets.redHitDistribution[6]).toBeGreaterThanOrEqual(1);
     expect(withheld.tickets.prizeCounts['1']).toBe(1);
-    expect(withheld.payout).toEqual({ accountedIssueCount: 0, withheldIssueCount: 1, accountedCostYuan: 0,
-      announcedPrizeReplayYuan: 0, formalRoi: null });
+    expect(withheld.payout).toMatchObject({ accountedIssueCount: 1, accountedCostYuan: 10, formalRoi: null });
+    // 公告缺失时一等奖浮动奖金无法定价，其余奖级按固定奖金计入。
+    expect(withheld.payout.unpricedTicketCount).toBeGreaterThanOrEqual(1);
     updateDrawPrizeDetail(database, matchingDraw(record, true), afterTargetDraw.toISOString());
     expect(summarizeRecommendationPerformance(database).issues).toEqual({ verified: 0, awaitingDraw: 0, awaitingVerification: 1 });
     verifyPendingRecommendations(database, afterTargetDraw);
     const accounted = summarizeRecommendationPerformance(database).payout;
-    expect(accounted).toMatchObject({ accountedIssueCount: 1, withheldIssueCount: 0, accountedCostYuan: 10 });
+    expect(accounted).toMatchObject({ accountedIssueCount: 1, unpricedTicketCount: 0, accountedCostYuan: 10 });
     expect(accounted.announcedPrizeReplayYuan).toBeGreaterThanOrEqual(5000000);
     updateDrawPrizeDetail(database, drawA, afterTargetDraw.toISOString());
     expect(summarizeRecommendationPerformance(database)).toEqual(withheld);

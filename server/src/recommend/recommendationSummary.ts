@@ -5,6 +5,12 @@ import { listRecommendations } from '../db/recommendationRepository';
 import { getRecommendationVerification } from './recommendationService';
 
 const GRADES: readonly PrizeGrade[] = [1, 2, 3, 4, 5, 6, 'fortune', 'none'];
+/** 公告缺失时采用固定奖金；一、二等奖为浮动奖金，无公告无法定价。 */
+const FIXED_PRIZE_YUAN: Partial<Record<PrizeGrade, number>> = { 3: 3000, 4: 200, 5: 10, 6: 5, fortune: 5, none: 0 };
+
+function ticketPrizeYuan(prizeYuan: number | null, grade: PrizeGrade, amounts: Partial<Record<PrizeGrade, number>> | undefined): number | undefined {
+  return prizeYuan ?? amounts?.[grade] ?? FIXED_PRIZE_YUAN[grade];
+}
 
 export interface RecommendationPerformanceSummary {
   definitionVersion: 'recommendation-summary-v1';
@@ -23,8 +29,8 @@ export interface RecommendationPerformanceSummary {
   };
   /** 单注随机理论值：红球期望命中 6×6/33，蓝球命中率 1/16。 */
   theoretical: { averageRedHits: number; blueHitRate: number };
-  /** 仅奖金审计通过期的公告税前回放；其他期整期暂停核算，不按命中挑样本。 */
-  payout: { accountedIssueCount: number; withheldIssueCount: number;
+  /** 全部已核验期的成本与公告税前奖金；unpricedTicketCount 为浮动奖金未公布而未计入金额的注数。 */
+  payout: { accountedIssueCount: number; unpricedTicketCount: number;
     accountedCostYuan: number; announcedPrizeReplayYuan: number; formalRoi: null };
   limitations: string[];
 }
@@ -35,7 +41,7 @@ export function summarizeRecommendationPerformance(database: SqliteDatabase): Re
     const issues = { verified: 0, awaitingDraw: 0, awaitingVerification: 0 };
     const redHitDistribution = [0, 0, 0, 0, 0, 0, 0];
     const prizeCounts: Record<string, number> = Object.fromEntries(GRADES.map(grade => [String(grade), 0]));
-    const payout = { accountedIssueCount: 0, withheldIssueCount: 0, accountedCostYuan: 0, announcedPrizeReplayYuan: 0 };
+    const payout = { accountedIssueCount: 0, unpricedTicketCount: 0, accountedCostYuan: 0, announcedPrizeReplayYuan: 0 };
     let ticketCount = 0, totalRedHits = 0, blueHitCount = 0;
     const records = listRecommendations(database);
     for (const record of records) {
@@ -54,14 +60,12 @@ export function summarizeRecommendationPerformance(database: SqliteDatabase): Re
         if (outcome.blueHit) blueHitCount++;
         redHitDistribution[outcome.redHits]++;
         prizeCounts[String(outcome.grade)]++;
+        const prize = ticketPrizeYuan(outcome.prizeYuan, outcome.grade, result.payoutAudit.amounts);
+        if (prize === undefined) payout.unpricedTicketCount++;
+        else payout.announcedPrizeReplayYuan += prize;
       }
-      if (result.payoutAudit.eligible && result.announcedPrizeReplayYuan !== null) {
-        payout.accountedIssueCount++;
-        payout.accountedCostYuan += result.costYuan;
-        payout.announcedPrizeReplayYuan += result.announcedPrizeReplayYuan;
-      } else {
-        payout.withheldIssueCount++;
-      }
+      payout.accountedIssueCount++;
+      payout.accountedCostYuan += result.costYuan;
     }
     return {
       definitionVersion: 'recommendation-summary-v1' as const,

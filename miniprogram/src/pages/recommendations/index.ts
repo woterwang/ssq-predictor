@@ -35,9 +35,10 @@ function presentSummary(summary: RecommendationSummary) {
     distributionText: tickets.redHitDistribution.map((count, hits) => `${hits}红×${count}`).join(' · '),
     prizeText: GRADES.map(grade => `${prizeGradeText(grade)} ${tickets.prizeCounts[String(grade)]}`).join(' · '),
     payoutText: payout.accountedIssueCount > 0
-      ? `奖金审计通过${payout.accountedIssueCount}期：成本 ${formatAmount(payout.accountedCostYuan)}，公告税前奖金回放 ${formatAmount(payout.announcedPrizeReplayYuan)}`
-      : '暂无奖金审计通过的期，不核算金额',
-    withheldText: `暂停核算${payout.withheldIssueCount}期；正式ROI不提供。`,
+      ? `已核算${payout.accountedIssueCount}期：成本 ${formatAmount(payout.accountedCostYuan)}，公告税前奖金 ${formatAmount(payout.announcedPrizeReplayYuan)}`
+      : '暂无已核验的期，不核算金额',
+    unpricedText: payout.unpricedTicketCount > 0
+      ? `${payout.unpricedTicketCount}注浮动奖金未公布，未计入奖金。` : '',
     limitations: summary.limitations,
   };
 }

@@ -130,8 +130,8 @@ export function validateRecommendationSummary(value: unknown): RecommendationSum
   ensure(Object.keys(prizes).length === grades.length && grades.every(grade => integer(prizes[grade]))
     && grades.reduce((sum, grade) => sum + Number(prizes[grade]), 0) === count);
   ensure(finite(theoretical.averageRedHits) && finite(theoretical.blueHitRate));
-  ensure(integer(payout.accountedIssueCount) && integer(payout.withheldIssueCount)
-    && payout.accountedIssueCount + payout.withheldIssueCount === issues.verified
+  ensure(integer(payout.accountedIssueCount) && payout.accountedIssueCount === issues.verified
+    && integer(payout.unpricedTicketCount, 0, Number(count))
     && nullableMoney(payout.accountedCostYuan) && payout.accountedCostYuan !== null
     && nullableMoney(payout.announcedPrizeReplayYuan) && payout.announcedPrizeReplayYuan !== null && payout.formalRoi === null);
   return value as RecommendationSummary;

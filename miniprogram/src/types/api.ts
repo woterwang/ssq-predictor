@@ -68,7 +68,7 @@ export interface RecommendationSummary {
     prizeCounts: Record<string, number>;
   };
   theoretical: { averageRedHits: number; blueHitRate: number };
-  payout: { accountedIssueCount: number; withheldIssueCount: number; accountedCostYuan: number;
+  payout: { accountedIssueCount: number; unpricedTicketCount: number; accountedCostYuan: number;
     announcedPrizeReplayYuan: number; formalRoi: null };
   limitations: string[];
 }

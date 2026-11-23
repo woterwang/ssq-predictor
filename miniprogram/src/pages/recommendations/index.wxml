@@ -18,7 +18,7 @@
         <view class="muted">红球命中分布：{{summary.distributionText}}</view>
         <view class="muted">奖级：{{summary.prizeText}}</view>
         <view class="space-top">{{summary.payoutText}}</view>
-        <view class="muted">{{summary.withheldText}}</view>
+        <view wx:if="{{summary.unpricedText}}" class="muted">{{summary.unpricedText}}</view>
       </block>
       <view wx:for="{{summary.limitations}}" wx:key="*this" class="muted space-top">· {{item}}</view>
     </block>
