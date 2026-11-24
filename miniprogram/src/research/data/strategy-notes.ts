@@ -18,7 +18,7 @@ export const STRATEGIES: StrategyNote[] = [
   {
     code: 'M0', name: 'M0_uniform_random · 均匀随机', status: '当前透明随机基线', statusTheme: 'success',
     principle: '每注从33个红球中公平不放回抽6个、从16个蓝球中均匀抽1个；多注只拒绝整注完全重复。首页推荐只使用M0。',
-    parameters: ['duplicateTickets = reject（整注去重）', 'structuralFilters = false（不做和值/奇偶等过滤）', '默认每期5注，服务器使用加密随机种子并固化'],
+    parameters: ['duplicateTickets = reject（整注去重）', 'structuralFilters = false（不做和值/奇偶等过滤）', '默认每期4注M0随机+末尾1注固定守号（红01 05 07 12 18 20 蓝15），共5注；服务器使用加密随机种子并固化'],
     limitations: ['不提高单注中奖概率；它是检验其他模型的公平参照。', '种子与哈希用于复核内容一致，不是第三方可信时间戳。'],
   },
   {

@@ -4,7 +4,7 @@ import { closeDatabase, getDatabase } from '../src/db/connection';
 import { generateNextRecommendation } from '../src/recommend/recommendationService';
 
 try {
-  // 不接受CLI时间/模型参数，默认5注及crypto随机UInt32种子。
+  // 不接受CLI时间/模型参数，默认M0 4注+末尾守号共5注及crypto随机UInt32种子。
   if (process.argv.length > 2) throw new Error('本命令不接受参数，生成时间必须来自服务器真实时钟');
   const database = getDatabase();
   const suspensionPeriods = loadSalesSuspensionPeriods();

@@ -65,7 +65,7 @@ function databaseWithChangedRecord(
 afterEach(() => { for (const database of databases.splice(0)) database.close(); });
 
 describe('M0开奖前固化', () => {
-  it('默认5注、源期号、下一期、保守20点截止和内容哈希均正确', () => {
+  it('默认4注M0+末尾守号共5注、源期号、下一期、保守20点截止和内容哈希均正确', () => {
     const database = memoryDatabase();
     const record = generate(database);
     expect(record).toMatchObject({ targetIssue: '2026125', targetDrawDate: '2026-11-01',
@@ -73,7 +73,9 @@ describe('M0开奖前固化', () => {
       strategyName: 'M0_uniform_random', strategyVersion: '1.0.0', seed: 123,
       generatedAt: productionLikeNow.toISOString() });
     expect(record.tickets).toHaveLength(5);
-    expect(new Set(record.tickets.map(ticket => canonicalJson(ticket))).size).toBe(5);
+    expect(record.tickets[4]).toEqual({ redBalls: [1, 5, 7, 12, 18, 20], blueBall: 15 });
+    expect(record.strategyParams).toMatchObject({ ticketsPerIssue: 4, fixedTickets: [record.tickets[4]] });
+    expect(new Set(record.tickets.slice(0, 4).map(ticket => canonicalJson(ticket))).size).toBe(4);
     expect(record.contentHash).toBe(computeRecommendationContentHash(record));
     expect(() => assertRecommendationContentHash(record)).not.toThrow();
     expect(listRecommendations(database)).toEqual([record]);
@@ -85,8 +87,46 @@ describe('M0开奖前固化', () => {
     expect(Number.isInteger(record.seed)).toBe(true);
     expect(record.seed).toBeGreaterThanOrEqual(0);
     expect(record.seed).toBeLessThanOrEqual(0xffffffff);
-    expect(record.tickets).toEqual(predictUniformRandom({ targetIssue: record.targetIssue, history: [],
-      ticketsPerIssue: 5, random: createResearchRandom(record.seed) }).tickets);
+    expect(record.tickets.slice(0, 4)).toEqual(predictUniformRandom({ targetIssue: record.targetIssue, history: [],
+      ticketsPerIssue: 4, random: createResearchRandom(record.seed) }).tickets);
+  });
+
+  it('无守号的旧5注M0记录仍可通过校验并核验', () => {
+    const generated = generate(memoryDatabase());
+    const legacyContent = { ...generated, strategyParams: { ...generated.strategyParams, ticketsPerIssue: 5 },
+      tickets: predictUniformRandom({ targetIssue: generated.targetIssue, history: [], ticketsPerIssue: 5,
+        random: createResearchRandom(generated.seed) }).tickets };
+    delete (legacyContent.strategyParams as Record<string, unknown>).fixedTickets;
+    const database = databaseWithChangedRecord(generated, legacyContent);
+    const legacy = listRecommendations(database)[0];
+    insertDraw(database, matchingDraw(legacy), afterTargetDraw.toISOString());
+    const result = verifyPendingRecommendations(database, afterTargetDraw);
+    expect(result).toMatchObject({ verifiedCount: 1, skippedCount: 0 });
+    expect(result.verifications[0].result.outcomes).toHaveLength(5);
+  });
+
+  it('守号作为第5注一并核验', () => {
+    const database = memoryDatabase();
+    const record = generate(database);
+    insertDraw(database, { ...makeDraw(record.targetIssue, record.targetDrawDate!),
+      redBalls: [1, 5, 7, 12, 18, 20], blueBall: 15 }, afterTargetDraw.toISOString());
+    const result = verifyPendingRecommendations(database, afterTargetDraw).verifications[0].result;
+    expect(result.outcomes).toHaveLength(5);
+    expect(result.outcomes[4]).toMatchObject({ redHits: 6, blueHit: true, grade: 1 });
+    expect(result.costYuan).toBe(10);
+  });
+
+  it.each([
+    ['末尾守号被替换', (record: RecommendationRecord) => ({ tickets: [...record.tickets.slice(0, 4),
+      { redBalls: [1, 5, 7, 12, 18, 21], blueBall: 15 }] })],
+    ['登记守号与末尾不一致', (record: RecommendationRecord) => ({ strategyParams: { ...record.strategyParams,
+      fixedTickets: [{ redBalls: [2, 5, 7, 12, 18, 20], blueBall: 15 }] } })],
+    ['守号挪到首位', (record: RecommendationRecord) => ({ tickets: [record.tickets[4], ...record.tickets.slice(0, 4)] })],
+  ])('篡改守号即使重算哈希也跳过核验：%s', (_label, change) => {
+    const original = generate(memoryDatabase());
+    const database = databaseWithChangedRecord(original, change(original));
+    insertDraw(database, matchingDraw(original), afterTargetDraw.toISOString());
+    expect(verifyPendingRecommendations(database, afterTargetDraw)).toMatchObject({ verifiedCount: 0, skippedCount: 1 });
   });
 
   it('相同seed复现M0，独立数据库/不同生成时间不影响号码', () => {

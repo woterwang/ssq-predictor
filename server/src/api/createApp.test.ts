@@ -401,12 +401,13 @@ describe('next 状态与完整推荐生命周期', () => {
     expect(original).toMatchObject({ id: 1, targetIssue: '2026125', strategyName: 'M0_uniform_random',
       generatedAt: now.toISOString(), sourceLatestIssue: '2026124' });
     expect(original.tickets).toHaveLength(5);
+    expect(original.tickets[4]).toEqual({ redBalls: [1, 5, 7, 12, 18, 20], blueBall: 15 });
     expect(Number.isInteger(original.seed)).toBe(true);
     expect(original.seed).toBeGreaterThanOrEqual(0);
     expect(original.seed).toBeLessThanOrEqual(0xffffffff);
     expect(original.contentHash).toBe(computeRecommendationContentHash(original));
-    expect(original.tickets).toEqual(predictUniformRandom({ targetIssue: original.targetIssue, history: [],
-      ticketsPerIssue: 5, random: createResearchRandom(original.seed) }).tickets);
+    expect(original.tickets.slice(0, 4)).toEqual(predictUniformRandom({ targetIssue: original.targetIssue, history: [],
+      ticketsPerIssue: 4, random: createResearchRandom(original.seed) }).tickets);
     const repeated = await authorizedPost(app, '/api/admin/recommendations/generate').expect(200);
     expect(repeated.body).toEqual(generated.body);
     const generatedSnapshot = databaseSnapshot(database);

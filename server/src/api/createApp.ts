@@ -175,7 +175,7 @@ export function createApiApp(dependencies: ApiDependencies): Express {
     if (view.nextDraw === null || !['not_generated', 'available'].includes(view.status)) {
       throw new ApiError(400, 'GENERATION_UNAVAILABLE', '当前无法生成推荐：请检查开奖同步与保守生成截止');
     }
-    // 不传 options：服务默认 M0、5 注、crypto UInt32 种子；时间仅来自服务器依赖。
+    // 不传 options：服务默认 M0 4 注 + 末尾守号共 5 注、crypto UInt32 种子；时间仅来自服务器依赖。
     const record = generateNextRecommendation(dependencies.database, dependencies.loadSuspensionPeriods(), dependencies.now());
     response.json({ data: publicRecommendation(record), disclaimers: API_DISCLAIMERS });
   });

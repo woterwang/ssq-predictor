@@ -92,8 +92,12 @@ describe('奖级与核验版本一致性', () => {
       blueBall: ticket.blueBall === 16 ? 1 : ticket.blueBall + 1, rawRecordJson: JSON.stringify({ code: '2026014', fyjMoney: '5', fyjCount: '1' }) };
     insertDraw(database, target, '2026-02-01T22:00:00+08:00');
     const result = verifyPendingRecommendations(database, new Date('2026-02-01T22:30:00+08:00')).verifications[0].result;
+    expect(result.outcomes).toHaveLength(2); // M0 1注 + 末尾守号
     expect(result.outcomes[0]).toMatchObject({ grade: 'fortune', prizeYuan: 5 });
-    expect(result.prizeCounts.fortune).toBe(1); expect(result.prizeCounts.none).toBe(0); expect(result.announcedPrizeReplayYuan).toBe(5);
+    const countOf = (grade: string) => result.outcomes.filter(outcome => outcome.grade === grade).length;
+    expect(result.prizeCounts.fortune).toBe(countOf('fortune')); expect(result.prizeCounts.none).toBe(countOf('none'));
+    expect(result.prizeCounts.none).toBeLessThan(2);
+    expect(result.announcedPrizeReplayYuan).toBe(result.outcomes.reduce((sum, outcome) => sum + (outcome.prizeYuan ?? 0), 0));
   });
   it('奖金A→B→A修正只复用A核验；未核验B不能展示A作当前版', () => {
     const database = memoryDatabase();

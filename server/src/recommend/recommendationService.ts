@@ -8,6 +8,7 @@ import { assertLegalTicket, buildDrawPayoutPolicy, countTicketHits, determinePri
   PRIZE_RULE_VERSION, TICKET_PRICE_YUAN } from '../backtest/prizeRules';
 import { computeNextDraw, isScheduledDrawDate } from '../calendar/drawCalendar';
 import type { SalesSuspensionPeriod } from '../calendar/drawCalendar';
+import type { LotteryTicket } from '../backtest/backtestTypes';
 import type { SqliteDatabase } from '../db/connection';
 import { findDrawByIssue, findLatestDraw } from '../db/drawRepository';
 import { findRecommendationById, findRecommendationByTargetAndStrategy, insertRecommendation,
@@ -19,7 +20,12 @@ import { assertRecommendationContentHash, canonicalJson, computeDrawFingerprint,
 import type { RecommendationContent, RecommendationOptions, RecommendationRecord,
   RecommendationVerificationResult, RecommendationVerificationView, VerifyPendingRecommendationsResult } from './recommendationTypes';
 
-export const DEFAULT_RECOMMENDATION_TICKETS = 5;
+/** M0随机注数；固定守号另行追加在末尾，默认合计5注。 */
+export const DEFAULT_RECOMMENDATION_TICKETS = 4;
+/** 守号：追加在M0随机注之后并登记于strategyParams.fixedTickets，不参与M0生成/去重。 */
+export const FIXED_RECOMMENDATION_TICKETS: readonly LotteryTicket[] = Object.freeze([
+  Object.freeze({ redBalls: Object.freeze([1, 5, 7, 12, 18, 20]), blueBall: 15 }),
+]);
 /** 防止单次请求耗尽资源，不是算法筛选或参数搜索。 */
 const MAX_RECOMMENDATION_TICKETS = 1000;
 export const GENERATION_DEADLINE_POLICY = 'conservative-generation-cutoff-20:00+08:00-v1';
@@ -61,9 +67,19 @@ function drawTimestamp(dateText: string): number {
   return Date.parse(`${dateText}T21:15:00.000+08:00`);
 }
 
-function parameters(ticketsPerIssue: number): Record<string, unknown> {
+/** ticketsPerIssue 仅指M0随机注数；无守号的旧记录不含 fixedTickets 键，保持原参数与哈希。 */
+function parameters(ticketsPerIssue: number, fixedTickets: readonly LotteryTicket[] = []): Record<string, unknown> {
   return { ...uniformRandomStrategy.parameters, ticketsPerIssue, randomAlgorithm: RANDOM_ALGORITHM,
-    generationDeadlinePolicy: GENERATION_DEADLINE_POLICY };
+    generationDeadlinePolicy: GENERATION_DEADLINE_POLICY,
+    ...(fixedTickets.length > 0 ? { fixedTickets: fixedTickets.map(copyTicket) } : {}) };
+}
+
+function copyTicket(ticket: LotteryTicket): LotteryTicket {
+  return { redBalls: [...ticket.redBalls], blueBall: ticket.blueBall };
+}
+
+function assertDistinctTickets(tickets: readonly LotteryTicket[]): void {
+  if (new Set(tickets.map(ticket => canonicalJson(ticket))).size !== tickets.length) throw new Error('推荐含重复整票');
 }
 
 /** 校验持久化记录：旧元数据/未知模型版本/非法票/越过截止的记录不参与真实核验。 */
@@ -81,19 +97,25 @@ function assertRecommendationMetadata(database: SqliteDatabase, record: Recommen
     || record.generationDeadline !== getConservativeGenerationDeadline(record.targetDrawDate)) {
     throw new Error('推荐元数据非法或旧行缺少目标日期/截止/源期号');
   }
-  validateOptions({ ticketsPerIssue: record.tickets.length, seed: record.seed });
-  if (canonicalJson(record.strategyParams) !== canonicalJson(parameters(record.tickets.length))) {
-    throw new Error('推荐策略参数与固化M0定义不一致');
-  }
-  const ticketKeys = new Set<string>();
+  const fixedTickets = record.strategyParams.fixedTickets ?? [];
+  if (!Array.isArray(fixedTickets) || fixedTickets.length >= record.tickets.length) throw new Error('推荐守号参数非法');
+  const randomCount = record.tickets.length - fixedTickets.length;
+  validateOptions({ ticketsPerIssue: randomCount, seed: record.seed });
   for (const ticket of record.tickets) {
     assertLegalTicket(ticket);
     if (ticket.redBalls.some((ball, index) => index > 0 && ball <= ticket.redBalls[index - 1])) {
       throw new Error('推荐红球必须严格升序');
     }
-    ticketKeys.add(canonicalJson(ticket));
   }
-  if (ticketKeys.size !== record.tickets.length) throw new Error('推荐含重复整票');
+  if (canonicalJson(record.strategyParams) !== canonicalJson(parameters(randomCount, fixedTickets as LotteryTicket[]))) {
+    throw new Error('推荐策略参数与固化M0定义不一致');
+  }
+  const randomTickets = record.tickets.slice(0, randomCount);
+  const appendedTickets = record.tickets.slice(randomCount);
+  if (canonicalJson(appendedTickets) !== canonicalJson(fixedTickets)) throw new Error('推荐末尾守号与登记参数不一致');
+  // M0内部、守号内部各自去重；随机注恰好等于守号属于公平抽样结果，不重抽以免改变M0分布。
+  assertDistinctTickets(randomTickets);
+  assertDistinctTickets(appendedTickets);
   const source = findDrawByIssue(database, record.sourceLatestIssue);
   if (!source || !isValidDateText(source.drawDate) || source.drawDate >= record.targetDrawDate
     || source.issue.slice(0, 4) !== source.drawDate.slice(0, 4)) throw new Error('推荐源期开奖缺失或日期非法');
@@ -155,8 +177,10 @@ export function generateNextRecommendation(
     const content: RecommendationContent = {
       targetIssue: target.issue, targetDrawDate: target.drawDate, generationDeadline: deadline,
       sourceLatestIssue: latest.issue, strategyName: uniformRandomStrategy.name,
-      strategyVersion: uniformRandomStrategy.version, strategyParams: parameters(validated.ticketsPerIssue),
-      seed, tickets: prediction.tickets, generatedAt: new Date(generationTime).toISOString(),
+      strategyVersion: uniformRandomStrategy.version,
+      strategyParams: parameters(validated.ticketsPerIssue, FIXED_RECOMMENDATION_TICKETS),
+      seed, tickets: [...prediction.tickets, ...FIXED_RECOMMENDATION_TICKETS.map(copyTicket)],
+      generatedAt: new Date(generationTime).toISOString(),
     };
     const record = { ...content, contentHash: computeRecommendationContentHash(content) };
     // 在写入前用同一完整校验，保证生成/核验的规则一致。
